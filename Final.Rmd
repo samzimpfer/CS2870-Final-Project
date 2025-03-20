@@ -18,8 +18,7 @@ ufo <- read.csv("ufo_sightings_scrubbed.csv")
 
 ggplot(data = ufo,
         mapping = aes(x = longitude))+
-  geom_histogram()+
-  )
+  geom_histogram()
 ```
 
 ## Including Plots
