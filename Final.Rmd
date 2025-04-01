@@ -14,12 +14,12 @@ pacman::p_load(tidyverse)
 
 
 ```{r cars}
-ufo <- read.csv("ufo_sightings_scrubbed.csv")
+ufo_raw <- read.csv("ufo_sightings_scrubbed.csv")
 
-ggplot(data = ufo,
-        mapping = aes(x = longitude))+
-  geom_histogram()+
-  )
+ufo<- ufo_raw|>
+  select(datetime, city, state, country, duration..seconds.,latitude,longitude)
+
+
 ```
 
 ## Including Plots
