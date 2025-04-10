@@ -7,7 +7,8 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-pacman::p_load(tidyverse)
+pacman::p_load(gapminder, socviz, tidyverse, grid, ggthemes,
+               usmap, maps, statebins, viridis, leaflet) 
 ```
 
 ## R Markdown
@@ -16,8 +17,11 @@ pacman::p_load(tidyverse)
 ```{r cars}
 ufo_raw <- read.csv("ufo_sightings_scrubbed.csv")
 
+
 ufo<- ufo_raw|>
   select(datetime, city, state, country, duration..seconds.,latitude,longitude)
+
+ufo$latitude <- as.numeric(ufo$latitude)
 
 
 ```
@@ -26,8 +30,62 @@ ufo<- ufo_raw|>
 
 You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
+```{r pressure, longitude & latitude }
+long_hist <- ggplot(
+  data = ufo,
+  mapping = aes( x= longitude
+  )
+)+
+  geom_histogram(fill = "olivedrab", 
+                 color = "black", 
+                 bins = 40)+
+  labs(
+    x = "Longitude",
+    y = "Number of Sightings"
+  )+
+scale_y_continuous(expand = c(0, 0, 0.05, 0))
 
+lat_hist <- ggplot(
+  data = ufo,
+  mapping = aes( x= latitude
+  )
+)+
+  geom_histogram(fill = "olivedrab", 
+                 color = "black",
+                 bins = 40)+
+  labs(
+    x = "Latitude",
+    y = "Number of Sightings"
+  )+
+scale_y_continuous(expand = c(0, 0, 0.05, 0))
+
+long_hist
+lat_hist
+```
+```{r , longitude & latitude compare }
+ggplot(data = ufo,
+       mapping = aes(
+         x = longitude,
+         y = latitude
+       ))+
+  geom_point()
+```
+```{r , map }
+map <- map_data("world")
+
+ggplot()+
+  geom_polygon(data = map,
+               mapping = aes(x= long,
+                             y = lat,
+                             group = group),
+               fill = "darkgreen")+
+  geom_point(data = ufo,
+             mapping = aes(x = longitude,
+                           y = latitude))+
+  labs(
+    x = "Longitude",
+    y = "Latitude"
+  )
+              
+```
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
