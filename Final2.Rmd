@@ -35,12 +35,6 @@ ufo<- ufo_raw|>
 ufo$latitude <- as.numeric(ufo$latitude) #chaning lat to numeric
 
 
-<<<<<<< HEAD
-=======
-ggplot(data = ufo,
-        mapping = aes(x = longitude))+
-  geom_histogram()
->>>>>>> refs/remotes/origin/main
 ```
 
 ## Including Plots
