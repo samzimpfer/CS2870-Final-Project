@@ -51,7 +51,7 @@ long_hist <- ggplot(
                  color = "black", 
                  bins = 40)+
   labs(
-    title = "Number of sightings per longitude"
+    title = "Number of sightings per longitude",
     x = "Longitude",
     y = "Number of Sightings"
   )+
