@@ -161,6 +161,15 @@ theme(
 linear regression 
 
 ```{r}
+ufo|>
+ # filter(seconds > 0)|>
+ggplot(
+       mapping = aes(x = longitude,
+                     y = seconds))+
+  geom_point()+
+  geom_smooth()
+
+
 ufo$seconds <- as.numeric(ufo$seconds)
 lm(
   formula = seconds ~longitude +latitude,
