@@ -54,7 +54,8 @@ long_hist <- ggplot(
     x = "Longitude",
     y = "Number of Sightings"
   )+
-scale_y_continuous(expand = c(0, 0, 0.05, 0))
+  scale_x_continuous(breaks = seq(-200, 200, 20))+
+  scale_y_continuous(expand = c(0, 0, 0.05, 0))
 
 lat_hist <- ggplot(
   data = ufo,
@@ -68,7 +69,8 @@ lat_hist <- ggplot(
     x = "Latitude",
     y = "Number of Sightings"
   )+
-scale_y_continuous(expand = c(0, 0, 0.05, 0))
+  scale_x_continuous(breaks = seq(-100, 100, 20))+
+  scale_y_continuous(expand = c(0, 0, 0.05, 0))
 
 long_hist
 lat_hist
