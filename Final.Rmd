@@ -39,7 +39,7 @@ ufo$latitude <- as.numeric(ufo$latitude) #chaning lat to numeric
 
 ## Including Plots
 
-You can also embed plots, for example:
+Longitude and latitude histogram
 
 ```{r pressure, longitude & latitude }
 long_hist <- ggplot(
@@ -73,6 +73,7 @@ scale_y_continuous(expand = c(0, 0, 0.05, 0))
 long_hist
 lat_hist
 ```
+Scatter plot of sighting locations 
 
 ```{r , map }
 map <- map_data("world")
@@ -105,6 +106,7 @@ scale_y_continuous(expand = c(0, 0, 0.05, 0))
   
          
 ```
+Bar graph of sightings per year
 ```{r, bar graph of sightings per year}
 ggplot( data = ufo,
         mapping = aes(x = year))+
