@@ -103,12 +103,17 @@ map_plot
 ```
 ```{r, bar graph of countries and cities}
 
-ggplot(data = ufo,
+modified_data = ufo |> filter(country != "")
+
+ggplot(data = modified_data,
        mapping = aes(x = country))+
   geom_bar(fill = "blue4",
            color = "black",
            na.rm = T)+
-scale_y_continuous(expand = c(0, 0, 0.05, 0))
+scale_y_log10(expand = c(0, 0, 0.05, 0))+
+  labs(title = "Total number of sightings per country",
+       x = "Country",
+       y = "Count (log10 scale)")
   
          
 ```
