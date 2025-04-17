@@ -90,12 +90,14 @@ map_plot <- ggplot()+
                fill = "darkgreen")+
   geom_point(data = ufo,
              mapping = aes(x = longitude,
-                           y = latitude))+
+                           y = latitude),
+             size = 0.3)+
   labs(
     x = "Longitude",
     y = "Latitude"
   )+
-scale_y_continuous(expand = c(0, 0, 0.05, 0))
+scale_y_continuous(expand = c(0, 0, 0.05, 0))+
+  ylim(-60,90)
 
 map_plot          
 ```
