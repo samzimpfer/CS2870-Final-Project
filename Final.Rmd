@@ -38,7 +38,6 @@ ufo$latitude <- as.numeric(ufo$latitude) #chaning lat to numeric
 ```
 
 ## Longitude and latitude histogram
-
 ```{r pressure, longitude & latitude }
 long_hist <- ggplot(
   data = ufo,
@@ -81,7 +80,6 @@ lat_hist
 
 
 ## Scatter plot of sighting locations 
-
 ```{r , map }
 map <- map_data("world")
 
@@ -102,10 +100,10 @@ map_plot <- ggplot()+
 scale_y_continuous(expand = c(0, 0, 0.05, 0))+
   ylim(-60,90)
 
-map_plot          
+map_plot
 ```
 ### Observations
-* Most of the sightings are concentrated in the US and in Europe
+* Most of the sightings are concentrated in North America and in Europe
 
 ```{r, bar graph of countries and cities}
 
@@ -123,7 +121,10 @@ scale_y_log10(expand = c(0, 0, 0.05, 0))+
   
          
 ```
-Bar graph of sightings per year
+### Observations
+* This graph supports the fact that the US, Canada, and Great Britain contain most of the sightings
+
+## Bar graph of sightings per year
 ```{r, bar graph of sightings per year}
 ggplot( data = ufo,
         mapping = aes(x = year))+
