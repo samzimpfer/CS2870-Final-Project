@@ -196,11 +196,6 @@ ggplot( data = summary,
         mapping = aes(x = month,
                       y = count))+
   geom_line()+
-
-ggplot( data = ufo_2000,
-        mapping = aes(x = month))+
-  geom_bar(fill = "purple",
-                 color = "black")+
   labs(
     x = "Month",
     y = "Number of Sightings"
