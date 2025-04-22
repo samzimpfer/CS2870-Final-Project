@@ -176,25 +176,3 @@ theme(
   
          
 ```
-
-linear regression 
-
-```{r}
-ufo|>
- # filter(seconds > 0)|>
-ggplot(
-       mapping = aes(x = longitude,
-                     y = seconds))+
-  geom_point()+
-  geom_smooth()
-
-
-ufo$seconds <- as.numeric(ufo$seconds)
-lm(
-  formula = seconds ~longitude +latitude,
-  data = ufo
-)
-
-
-```
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
