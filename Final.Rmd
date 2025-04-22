@@ -3,8 +3,8 @@ title: "UFO"
 author: "Shealagh Brown & Sam Zimpfer"
 date: "2025-03-20"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -187,25 +187,28 @@ theme(
 
 
 ```{r, small multiples}
-ufo_2000<- ufo|>
-  filter(year >= 2000)
+# create table of year, month, number of sightings
+summary <- ufo |> filter(year >= 2000) |> group_by(year, month) |> summarise(count = n())
 
-summary <- ufo_2000 |> group_by(year, month) |> summarise(count = n())
+# order data by natural month ordering
+summary$month <- factor(summary$month, levels = month.name)
+summary <- summary |> arrange(year, month)
 
-ggplot( data = summary,
-        mapping = aes(x = month,
-                      y = count))+
-  geom_line()+
-  labs(
-    x = "Month",
-    y = "Number of Sightings"
-  )+
-scale_y_continuous(expand = c(0, 0, 0.05, 0))+
-theme(
-  axis.text = element_text( angle = 90
-     )
-)+
+ggplot(data = summary,
+       mapping = aes(x = month,
+                     y = count,
+                     group = 1)) +
+  geom_line() +
+  labs(x = "Month",
+       y = "Number of Sightings") +
+  scale_y_continuous(expand = c(0, 0, 0.05, 0)) +
+  theme(axis.text.x = element_text(angle = 90)) +
   facet_wrap(~ year)
-  
-         
 ```
+
+### Observations
+* The average number of sightings per year seems to increase over time
+* Sightings appear to be most prevalent during late summer and early fall, possibly because more people are outside around this time of year
+
+---
+
