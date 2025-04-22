@@ -190,10 +190,12 @@ theme(
 ufo_2000<- ufo|>
   filter(year >= 2000)
 
-ggplot( data = ufo_2000,
-        mapping = aes(x = month))+
-  geom_bar(fill = "purple",
-                 color = "black")+
+summary <- ufo_2000 |> group_by(year, month) |> summarise(count = n())
+
+ggplot( data = summary,
+        mapping = aes(x = month,
+                      y = count))+
+  geom_line()+
   labs(
     x = "Month",
     y = "Number of Sightings"
