@@ -90,9 +90,12 @@ lat_hist <- ggplot(
 long_hist
 lat_hist
 ```
+
 ### Observations
 * Longitudes of sightings appear to be concentrated around -120 through -70 (Number of sightings per longitude)
 * Lattitude of sightings appear to be concentrated around 30 through 50 (Number of sightings per lattitude)
+
+---
 
 
 ## Scatter plot of sighting locations 
@@ -118,9 +121,14 @@ scale_y_continuous(expand = c(0, 0, 0.05, 0))+
 
 map_plot
 ```
+
 ### Observations
 * Most of the sightings are concentrated in North America and in Europe
 
+---
+
+
+## Bar graph of sightings per country
 ```{r, bar graph of countries and cities}
 
 modified_data = ufo |> filter(country != "")
@@ -137,8 +145,12 @@ scale_y_log10(expand = c(0, 0, 0.05, 0))+
   
          
 ```
+
 ### Observations
 * This graph supports the fact that the US, Canada, and Great Britain contain most of the sightings
+
+---
+
 
 ## Bar graph of sightings per year
 ```{r, bar graph of sightings per year}
@@ -167,6 +179,13 @@ theme(
      )
 )
 ```
+
+### Observations
+* Sightings increased dramatically around late 1990s and early 2000s, then seemed to remain relatively constant after 2010
+
+---
+
+
 ```{r, small multiples}
 ufo_2000<- ufo|>
   filter(year >= 2000)
