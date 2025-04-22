@@ -18,7 +18,7 @@ theme_bw()
 
 ## Cleaning the data
 
-The code chunk below reads in our data about UFO sightings. We had to convert the datetime variable to year, month, date format. Then we created a new dataframe containing only necessary variables for our purposes. 
+The code chunk below reads in our data about UFO sightings. We had to convert the datetime variable to year, month, date format. Then we created a new data frame containing only necessary variables for our purposes. Latitude had to then be convered into a numeric variable.
 
 The variables used are:
 **datetime**: the date and time of sighting in year, month, day, hours, minutes, seconds format. 
@@ -44,15 +44,16 @@ ufo<- ufo_raw|>
           month = month.name[month(datetime)])|> #create month column and convert to name 
   select(datetime, city, state, country, seconds,latitude,longitude, year, month)
   
-
- 
-
-ufo$latitude <- as.numeric(ufo$latitude) #chaning lat to numeric
+ufo$latitude <- as.numeric(ufo$latitude) #changing lat to numeric
 
 
 ```
 
-## Longitude and latitude histogram
+## Data Summary 
+
+The first question we wanted to answer is where do most UFO sightings occur. 
+
+We created graphs of sighingts based on longitude and latitudue 
 ```{r pressure, longitude & latitude }
 long_hist <- ggplot(
   data = ufo,
