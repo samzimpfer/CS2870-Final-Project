@@ -18,7 +18,18 @@ theme_bw()
 
 ## Cleaning the data
 
-The code chunk below reads in our data about UFO sightings. We had to convert the datetime variable to year, month, date format. 
+The code chunk below reads in our data about UFO sightings. We had to convert the datetime variable to year, month, date format. Then we created a new dataframe containing only necessary variables for our purposes. 
+
+The variables used are:
+**datetime**: the date and time of sighting in year, month, day, hours, minutes, seconds format. 
+**city**: city where sighitng occurred
+**state**: state where sighting occurred
+**country**: country where sighting occurred
+**seconds**: duration of sightings in seconds
+**latitude**: latitude of sighting
+**longitude**: longitude of sighing
+**year**: year when sighing occured
+**month**: month when sighitng occured 
 
 ```{r cars}
 ufo_raw <- read.csv("ufo_sightings_scrubbed.csv")
