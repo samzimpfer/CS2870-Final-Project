@@ -150,9 +150,6 @@ theme(
   axis.text = element_text( angle = 90
      )
 )
-
-  
-         
 ```
 ```{r, small multiples}
 ufo_2000<- ufo|>
