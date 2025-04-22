@@ -1,6 +1,6 @@
 ---
-title: "Final"
-author: "Shealagh Brown"
+title: "UFO"
+author: "Shealagh Brown & Sam Zimpfer"
 date: "2025-03-20"
 output:
   html_document: default
@@ -14,11 +14,15 @@ pacman::p_load(gapminder, socviz, tidyverse, grid, ggthemes,
 theme_bw()
 ```
 
-## Setup
+## Introduction
 
+## Cleaning the data
+
+The code chunk below reads in our data about UFO sightings. We had to convert the datetime variable to year, month, date format. 
 
 ```{r cars}
 ufo_raw <- read.csv("ufo_sightings_scrubbed.csv")
+
 #convert date time to ymd_hms format
 ufo_raw$datetime <- ymd_hms(ufo_raw$datetime)
 
