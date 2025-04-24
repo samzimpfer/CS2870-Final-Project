@@ -212,6 +212,10 @@ ggplot(data = summary,
 * The average number of sightings per year seems to increase over time
 * Sightings appear to be most prevalent during late summer and early fall, possibly because more people are outside around this time of year
 
+---
+
+
+## Correlation Plot for lattitude, longitude, and seconds
 ```{r, correlation plot}
 ufo|>
   select(seconds:longitude)|>
@@ -261,17 +265,11 @@ lat_long_lm |>
 
 ```
 
+---
 
-## Linear Regression Model for Duration of Sightings vs Longitude and Lattitude
-```{r, regression model}
-ufo_trimmed <- ufo |> filter(year > 2005)
-ufo_trimmed$seconds <- as.numeric(ufo_trimmed$seconds)
-model_lat = lm(formula = seconds ~ latitude,
-               data = ufo_trimmed)
-model_long = lm(formula = seconds ~ longitude,
-                data = ufo_trimmed)
-model_both <- lm(formula = seconds ~ latitude + longitude,
-                 data = ufo_trimmed)
+
+## Residual Plots for Duration of Sightings vs Longitude and Lattitude
+```{r, residual plots}
 
 show_resid_plot <- function(model, name) {
   augment_columns(x = model, 
@@ -291,39 +289,47 @@ show_resid_plot <- function(model, name) {
 
 show_resid_plots_split <- function(model, name) {
   # classify data as short duration or long duration
-  augmented <- augment_columns(x = model, 
-                               data = ufo_trimmed) |>
+  augmented <- augment_columns(x = model,
+                               data = ufo) |>
     mutate(long = abs(.resid) > 0.25 * sd(.resid, na.rm = TRUE))
-  
-  augmented |>
+
+  graph_short <- augmented |>
     filter(!long) |>
-    ggplot(aes(x = .fitted, 
+    ggplot(aes(x = .fitted,
                y = .resid)) +
     geom_point(alpha = 0.6) +
-    geom_hline(yintercept = 0, 
-               linetype = "dashed", 
+    geom_hline(yintercept = 0,
+               linetype = "dashed",
                color = "darkred") +
-    geom_smooth(method = "loess", 
+    geom_smooth(method = "loess",
                 se = FALSE) +
     labs(title = paste(name, "Residuals (Short duration)"),
          y = ".resid (seconds)")
   
-  augmented |>
+  print(graph_short)
+  
+  
+  graph_long <- augmented |>
     filter(long) |>
-    ggplot(aes(x = .fitted, 
+    ggplot(aes(x = .fitted,
                y = .resid)) +
-    geom_point() +
-    geom_hline(yintercept = 0, 
-               linetype = "dashed", 
+    geom_point(alpha = 0.6) +
+    geom_hline(yintercept = 0,
+               linetype = "dashed",
                color = "darkred") +
+    geom_smooth(method = "loess",
+                se = FALSE) +
     labs(title = paste(name, "Residuals (Long duration)"),
-         y = ".resid (seconds log10)") + 
-    scale_y_log10() 
+         y = ".resid (seconds log10)") +
+    scale_y_log10()
+  
+  print(graph_long)
 }
 
-show_resid_plots_split(model_lat, "Latitude Model")
-#show_resid_plots(model_long, "Longitude Model")
-#show_resid_plots(model_both, "Latitude + Longitude Model")
+show_resid_plots_split(lat_lm, "Latitude Model")
+show_resid_plots_split(long_lm, "Longitude Model")
+show_resid_plots_split(lat_long_lm, "Latitude + Longitude Model")
+
 
 ```
 
