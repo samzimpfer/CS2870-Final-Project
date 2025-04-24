@@ -3,8 +3,8 @@ title: "UFO"
 author: "Shealagh Brown & Sam Zimpfer"
 date: "2025-03-20"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -274,12 +274,7 @@ lat_long_lm |>
 ```
 
 ```{r, polynomial regression}
-ufo|>
-  filter()|>
- lm(
-  formula = seconds ~ poly(latitude + longitude),
-  data = ufo 
-) -> lat_long_lm
+
 
 ```
 
