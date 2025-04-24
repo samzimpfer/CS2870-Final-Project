@@ -3,8 +3,8 @@ title: "UFO"
 author: "Shealagh Brown & Sam Zimpfer"
 date: "2025-03-20"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
