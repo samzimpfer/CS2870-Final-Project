@@ -10,7 +10,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 pacman::p_load(gapminder, socviz, tidyverse, grid, ggthemes,
-               usmap, maps, statebins, viridis, leaflet, lubridate) 
+               usmap, maps, statebins, viridis, leaflet, lubridate, broom) 
 theme_bw()
 ```
 
@@ -186,6 +186,7 @@ theme(
 ---
 
 
+## Small Multiples Graph of Number of Sightings Per Month Since Year 2000
 ```{r, small multiples}
 # create table of year, month, number of sightings
 summary <- ufo |> filter(year >= 2000) |> group_by(year, month) |> summarise(count = n())
@@ -212,3 +213,77 @@ ggplot(data = summary,
 
 ---
 
+
+## Linear Regression Model for Duration of Sightings vs Longitude and Lattitude
+```{r, regression model}
+ufo_trimmed <- ufo |> filter(year > 2005)
+ufo_trimmed$seconds <- as.numeric(ufo_trimmed$seconds)
+model_lat = lm(formula = seconds ~ latitude,
+               data = ufo_trimmed)
+model_long = lm(formula = seconds ~ longitude,
+                data = ufo_trimmed)
+model_both <- lm(formula = seconds ~ latitude + longitude,
+                 data = ufo_trimmed)
+
+show_resid_plot <- function(model, name) {
+  augment_columns(x = model, 
+                  data = ufo_trimmed) |> 
+    ggplot(mapping = aes(x = .fitted,
+                         y = .resid)) + 
+    geom_point() + 
+    geom_hline(yintercept = 0,
+               color = "darkred",
+               linetype = "dashed",
+               linewidth = 1) + 
+    geom_smooth(method = "loess",
+                se = F) + 
+    labs(title = paste(name, "Residuals"),
+         y = ".resid (seconds)")
+}
+
+show_resid_plots_split <- function(model, name) {
+  # classify data as short duration or long duration
+  augmented <- augment_columns(x = model, 
+                               data = ufo_trimmed) |>
+    mutate(long = abs(.resid) > 0.25 * sd(.resid, na.rm = TRUE))
+  
+  augmented |>
+    filter(!long) |>
+    ggplot(aes(x = .fitted, 
+               y = .resid)) +
+    geom_point(alpha = 0.6) +
+    geom_hline(yintercept = 0, 
+               linetype = "dashed", 
+               color = "darkred") +
+    geom_smooth(method = "loess", 
+                se = FALSE) +
+    labs(title = paste(name, "Residuals (Short duration)"),
+         y = ".resid (seconds)")
+  
+  augmented |>
+    filter(long) |>
+    ggplot(aes(x = .fitted, 
+               y = .resid)) +
+    geom_point() +
+    geom_hline(yintercept = 0, 
+               linetype = "dashed", 
+               color = "darkred") +
+    labs(title = paste(name, "Residuals (Long duration)"),
+         y = ".resid (seconds log10)") + 
+    scale_y_log10() 
+}
+
+show_resid_plots_split(model_lat, "Latitude Model")
+#show_resid_plots(model_long, "Longitude Model")
+#show_resid_plots(model_both, "Latitude + Longitude Model")
+
+```
+
+### Observations
+* The model behaves slightly strangely, likely because sightings that are concentrated around certain longitudes and latitudes are being interpreted linearly
+* There are much more positive residuals than negative residuals, however the line of best fit through the points is close to or less than 0. This indicates that most of the sightings were very short, and a much smaller portion was significantly longer
+
+---
+
+
+## Using the Model
