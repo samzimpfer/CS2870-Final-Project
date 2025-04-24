@@ -45,7 +45,7 @@ ufo<- ufo_raw|>
   select(datetime, city, state, country, seconds,latitude,longitude, year, month)
   
 ufo$latitude <- as.numeric(ufo$latitude) #changing lat to numeric
-
+ufo$seconds <- as.numeric(ufo$seconds) #changing seconds to numeric
 
 ```
 
@@ -91,9 +91,9 @@ long_hist
 lat_hist
 ```
 
-### Observations
-* Longitudes of sightings appear to be concentrated around -120 through -70 (Number of sightings per longitude)
-* Lattitude of sightings appear to be concentrated around 30 through 50 (Number of sightings per lattitude)
+
+
+
 
 ---
 
@@ -123,7 +123,8 @@ map_plot
 ```
 
 ### Observations
-* Most of the sightings are concentrated in North America and in Europe
+From the histograms, we noticed that most ufo sightings are concentrated around -120 through -70 longitude and 30 through 50 latitudes. When longitude and latitude are graphed against each other and over layed with a map of the word we can see that these values correspond with a high volume of sightings in the United States. This graph also indicates other potential hot spots of sightings, specifically Europe and the eastern coast of Australia. 
+
 
 ---
 
@@ -210,5 +211,52 @@ ggplot(data = summary,
 * The average number of sightings per year seems to increase over time
 * Sightings appear to be most prevalent during late summer and early fall, possibly because more people are outside around this time of year
 
----
+```{r, correlation plot}
+ufo|>
+  select(seconds:longitude)|>
+ggcorr(
+  low = "red3",
+  mid = "white",
+  high ="blue",
+  label = T,
+  label_round = 2,
+  angle = -45
+)
+
+```
+```{r, regression model}
+lat_lm<- lm(
+  formula = seconds ~ latitude,
+  data = ufo 
+)
+  
+long_lm<- lm(
+  formula = seconds ~ longitude,
+  data = ufo 
+)
+  
+lat_long_lm<- lm(
+  formula = seconds ~ latitude + longitude,
+  data = ufo 
+)
+
+bind_rows(
+  glance(lat_lm),
+  glance(long_lm),
+  glance(lat_long_lm)
+  ) |> 
+
+  mutate(
+    explanatories = c(as.character(formula(lat_lm))[3],
+                      as.character(formula(long_lm))[3],
+                      as.character(formula(lat_long_lm))[3])
+  ) |> 
+select(explanatories, r.squared, adj.r.squared, sigma)  
+
+lat_long_lm |> 
+  tidy()
+```
+```{r, }
+
+```
 
