@@ -3,14 +3,14 @@ title: "UFO"
 author: "Shealagh Brown & Sam Zimpfer"
 date: "2025-03-20"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 pacman::p_load(gapminder, socviz, tidyverse, grid, ggthemes,
-               usmap, maps, statebins, viridis, leaflet, lubridate, broom) 
+               usmap, maps, statebins, viridis, leaflet, lubridate, broom, GGally) 
 theme_bw()
 ```
 
@@ -38,12 +38,12 @@ ufo_raw <- read.csv("ufo_sightings_scrubbed.csv")
 ufo_raw$datetime <- ymd_hms(ufo_raw$datetime)
 
 #cleaning data
-ufo<- ufo_raw|>
+ufo_raw|>
    mutate(seconds = duration..seconds.,
           year = year(datetime), #create year column
-          month = month.name[month(datetime)])|> #create month column and convert to name 
-  filter(seconds <= 40000)|> #removing large outliers
-  select(datetime, city, state, country, seconds,latitude,longitude, year, month)
+          month = month.name[month(datetime)])|> #create month column and convert to name  
+  select(datetime, city, state, country, seconds,latitude,longitude, year, month)|>
+    filter(seconds <= 40000) -> ufo
   
 ufo$latitude <- as.numeric(ufo$latitude) #changing lat to numeric
 ufo$seconds <- as.numeric(ufo$seconds) #changing seconds to numeric
@@ -109,12 +109,12 @@ map_plot <- ggplot()+
                              y = lat,
                              group = group),
                fill = "darkgreen")+
-  geom_point(data = ufo,
+  geom_point(data = filter(ufo, seconds < 40000),
              mapping = aes(x = longitude,
                            y = latitude,
                            color = seconds),
-             size = 0.3,
-             alpha = 0.1)+
+             size = 0.3
+           )+
   labs(
     x = "Longitude",
     y = "Latitude"
@@ -240,7 +240,7 @@ ggcorr(
 ```
 
 
-```{r, regression model}
+```{r,  models}
 lat_lm<- lm(
   formula = seconds ~ latitude,
   data = ufo 
