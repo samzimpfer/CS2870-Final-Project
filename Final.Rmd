@@ -142,13 +142,13 @@ ggplot(data = modified_data,
 scale_y_log10(expand = c(0, 0, 0.05, 0))+
   labs(title = "Total number of sightings per country",
        x = "Country",
-       y = "Count (log10 scale)")
+       y = "Count (log10 scale)")+
+scale_x_discrete(labels = c("Australia", "Canada", "Denmark", "Great Britian", "United States"))
   
          
 ```
 
-### Observations
-* This graph supports the fact that the US, Canada, and Great Britain contain most of the sightings
+From this graph we can determine that the United States is the country with the most sightings. There is a signficantly higher amount of sightings in the U.S. as opposed to the other countries as it is the only country with greater than 10,000 sightings. Of the five highest countries with sighitngs, Denmark has the lowest amount of sightings. They have just around 100 sighitngs reported. 
 
 ---
 
@@ -165,7 +165,12 @@ ggplot( data = ufo,
     y = "Number of Sightings"
   )+
 scale_y_continuous(expand = c(0, 0, 0.05, 0))
+```
+### Observations
+UFO sightings were relatively infrequent in the early 1900's. Sightings gradually started to increase during the 1950's and then there was a sharp increase at the end of the 1990's and into the 2000's. 
 
+
+```{r, bar graph of sightings per month}
 by_month <- ggplot( data = ufo,
         mapping = aes(x = month))+
   geom_bar(fill = "purple",
@@ -179,10 +184,12 @@ theme(
   axis.text = element_text( angle = 90
      )
 )
+by_month
 ```
-
 ### Observations
-* Sightings increased dramatically around late 1990s and early 2000s, then seemed to remain relatively constant after 2010
+Over the years, UFO sightings have been most common during June, July, and August. The fewest occurances happend during February. 
+
+
 
 ---
 
@@ -208,8 +215,11 @@ ggplot(data = summary,
 ```
 
 ### Observations
-* The average number of sightings per year seems to increase over time
-* Sightings appear to be most prevalent during late summer and early fall, possibly because more people are outside around this time of year
+When we compare how sightings per month has changed over time we see that generally the amount of sighitngs has increased. Before 2009 sightinga are generally conisistent over the year. In 2009 we can see the first real peak during the summer. This trend seems to be reflected in the following years since then. 
+
+#Machine Learning
+
+We want to conduct linear regression to determine the effect that longitude and latitude have on the durration of sighitngs. Before we create a model we will check for 
 
 ```{r, correlation plot}
 ufo|>
@@ -224,6 +234,8 @@ ggcorr(
 )
 
 ```
+
+
 ```{r, regression model}
 lat_lm<- lm(
   formula = seconds ~ latitude,
@@ -256,6 +268,7 @@ select(explanatories, r.squared, adj.r.squared, sigma)
 lat_long_lm |> 
   tidy()
 ```
+
 ```{r, }
 
 ```
