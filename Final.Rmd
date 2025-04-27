@@ -243,7 +243,9 @@ ggcorr(
 
 ```
 
+---
 
+## Setting up linear regression models
 ```{r,  models}
 lat_lm<- lm(
   formula = seconds ~ latitude,
@@ -334,8 +336,6 @@ show_resid_plots_split <- function(model, name) {
     geom_hline(yintercept = 0,
                linetype = "dashed",
                color = "darkred") +
-    geom_smooth(method = "loess",
-                se = FALSE) +
     labs(title = paste(name, "Residuals (Long duration)"),
          y = ".resid (seconds log10)") +
     scale_y_log10()
@@ -352,7 +352,8 @@ show_resid_plots_split(lat_long_lm, "Latitude + Longitude Model")
 
 ### Observations
 * The model behaves slightly strangely, likely because sightings that are concentrated around certain longitudes and latitudes are being interpreted linearly
-* There are much more positive residuals than negative residuals, however the line of best fit through the points is close to or less than 0. This indicates that most of the sightings were very short, and a much smaller portion was significantly longer
+* There are much more positive residuals than negative residuals, however the line of best fit through the points is close to or less than 0. This indicates that most of the sightings were very short, and the much smaller portion that are significatnly longer do not get predicted well by the model
+* Our consensus is that because of the inaccuracy in predicting long-duration sightings, a linear regression model cannot be used to correctly predict the duration of UFO sightings based on longitude and latitude.
 
 ---
 
