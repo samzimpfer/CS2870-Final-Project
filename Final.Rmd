@@ -279,13 +279,6 @@ lat_long_lm |>
   tidy()
 ```
 
-```{r, polynomial regression}
-
-
-```
-
----
-
 
 ## Residual Plots for Duration of Sightings vs Longitude and Lattitude
 ```{r, residual plots}
@@ -358,4 +351,156 @@ show_resid_plots_split(lat_long_lm, "Latitude + Longitude Model")
 ---
 
 
-## Using the Model
+## Setting up kNN regression- Finding the best k
+
+``` {r finding the best k}
+ufo_filtered <- 
+  ufo |> drop_na(longitude, latitude, seconds)
+
+normalize <- function(x) {
+  return((x - min(x)) / (max(x) - min(x)))
+}
+
+standardize <- function(x) {
+  return((x - mean(x)) / sd(x))
+}
+
+ufo_norm <- 
+  ufo_filtered |> 
+  select(longitude, latitude, seconds) |> 
+  mutate(
+    across(
+      .cols = everything(),
+      .fns = normalize
+    )
+  )
+
+ufo_stan <- 
+  ufo_filtered |> 
+  select(longitude, latitude, seconds) |> 
+  mutate(
+    across(
+      .cols = everything(),
+      .fns = standardize
+    )
+  )
+
+
+k <- 1:20
+
+
+# try with normalizing
+fit_stats_norm <- 
+  tibble(k = k,
+         R2 = rep(-1, length(k)),
+         MAE = rep(-1, length(k)))
+
+for (i in 1:length(k)) {
+  loop_knn <- 
+    knn.reg(
+      train = ufo_norm,
+      y = ufo_filtered$seconds,
+      k = k[i]
+    )
+  
+  fit_stats_norm[i, "R2"] <- loop_knn$R2Pred
+  fit_stats_norm[i, "MAE"] <- (ufo_filtered$seconds - loop_knn$pred) |> abs() |> mean()
+}
+
+fit_stats_norm
+
+fit_stats_norm |> 
+  pivot_longer(
+    cols = R2:MAE,
+    names_to = "fit_stat",
+    values_to = "fit"
+  ) |> 
+  
+  ggplot(mapping = aes(x = k,
+                       y = fit,
+                       color = fit_stat)) + 
+  geom_line(show.legend = F) + 
+  facet_wrap(facets = ~ fit_stat,
+             scales = "free_y",
+             ncol = 1)
+
+
+# try with standardizing
+fit_stats_stan <- 
+  tibble(k = k,
+         R2 = rep(-1, length(k)),
+         MAE = rep(-1, length(k)))
+
+for (i in 1:length(k)) {
+  loop_knn <- 
+    knn.reg(
+      train = ufo_stan,
+      y = ufo_filtered$seconds,
+      k = k[i]
+    )
+  
+  fit_stats_stan[i, "R2"] <- loop_knn$R2Pred
+  fit_stats_stan[i, "MAE"] <- (ufo_filtered$seconds - loop_knn$pred) |> abs() |> mean()
+}
+
+fit_stats_stan
+
+fit_stats_stan |> 
+  pivot_longer(
+    cols = R2:MAE,
+    names_to = "fit_stat",
+    values_to = "fit"
+  ) |> 
+  
+  ggplot(mapping = aes(x = k,
+                       y = fit,
+                       color = fit_stat)) + 
+  geom_line(show.legend = F) + 
+  facet_wrap(facets = ~ fit_stat,
+             scales = "free_y",
+             ncol = 1)
+```
+
+### Observations
+* The best way to go about kNN regression is to use a standardized dataset with a k value of 2. This is true because this gives the highest R^2 value of 0.8.
+
+---
+
+
+## Making the kNN regression model
+``` {r making the knn regression model}
+# splitting data into training and testing
+knn_train <- sample_frac(ufo_filtered, 0.5)
+knn_test <- sample_frac(ufo_filtered, 0.5)
+
+
+tree_full <- 
+  rpart(
+    formula = seconds ~ longitude + latitude,
+    data = knn_train,
+    method = "anova",
+    minsplit = 2,
+    minbucket = 1,
+    cp = -1
+  )
+
+# Predicting the duration for ufo data
+predict(
+  object = tree_full
+) ->
+  pred_duration
+
+
+bind_rows("predicted" = summary(pred_duration),
+          "actual" = summary(knn_test$seconds),
+          .id = "income")
+
+knn_train |> mutate(pred_duration = pred_duration) |> 
+  summarize(
+    "R2_full" = cor(pred_duration, seconds)^2
+  )
+```
+
+### Observations
+* Using kNN regression proved to be 75.02% accurate in predicting the duration of sighting based on longitude and latitude.
+* Based on an R^2 value of 0.7502
