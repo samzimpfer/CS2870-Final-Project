@@ -157,5 +157,202 @@ ggplot(data = summary,
   theme(axis.text.x = element_text(angle = 90)) +
   facet_wrap(~ year)
 ```
-Here we have a small multiples graph which shows the seasonal trends in UFO data since the year 2000. Like the previous graph, these graphs also show that total UFO sightings have increased since 2000. Before 2009 sightings are generally consistent over the years. In 2009 we can see the first real peak during the summer. This trend seems to be reflected in the following years since then. It's possible that this is simply because more people are outdoors at this time of year, so more UFO visits are reported as sightings. Because of this highly plausible explanation, we can't necessarily determine from the data whether there was an actual increase in UFO visits in the summers. This highlights to disconnect between UFO sightings are UFO visits. 
+Here we have a small multiples graph which shows the seasonal trends in UFO data since the year 2000. Like the previous graph, these graphs also show that total UFO sightings have increased since 2000. Before 2009 sightings are generally consistent over the years. In 2009 we can see the first real peak during the summer. This trend seems to be reflected in the following years since then. It's possible that this is simply because more people are outdoors at this time of year, so more UFO visits are reported as sightings. Because of this highly plausible explanation, we can't necessarily determine from the data whether there was an actual increase in UFO visits in the summers. This highlights to disconnect between UFO sightings are UFO visits.
+
+
+## Machine learning
+
+Our original goal was to use machine learning techniques to identify a relationship between the duration of sightings and the longitude/latitude the sightings took place at. We used both linear and kNN regression techniques to model this relationship, but after some trial and error it became apparent that the data points are spread in too random of a way to be modeled in any significant way by regression techniques. To see the absence of a linear relationship, we will take a look at the graphs produced below, and the code used to produce them. These graphs use a linear model based on only latitude, only longitude, and latitude plus longitude respectively.
+
+```{r,  models}
+lat_lm<- lm(
+  formula = seconds ~ latitude,
+  data = ufo 
+)
+  
+long_lm<- lm(
+  formula = seconds ~ longitude,
+  data = ufo 
+)
+  
+lat_long_lm<- lm(
+  formula = seconds ~ latitude + longitude,
+  data = ufo 
+)
+
+bind_rows(
+  glance(lat_lm),
+  glance(long_lm),
+  glance(lat_long_lm)
+  ) |> 
+
+  mutate(
+    explanatories = c(as.character(formula(lat_lm))[3],
+                      as.character(formula(long_lm))[3],
+                      as.character(formula(lat_long_lm))[3])
+  ) |> 
+select(explanatories, r.squared, adj.r.squared, sigma)  
+
+
+```
+## Residual Plots for Duration of Sightings vs Longitude and Lattitude
+```{r, residual plots}
+resid_plot_print <- function(model) {
+  augment_columns(
+  x = model, 
+  data = ufo
+) |> 
+  
+  ggplot(
+    mapping = aes(
+      x = .fitted,
+      y = .resid
+    )
+  ) + 
+  
+  geom_point(alpha = 0.5) + 
+  
+  geom_hline(
+    yintercept = 0,
+    color = "red",
+    linewidth = 1
+  ) + 
+  
+  labs(
+    x = "Predicted",
+    y = "Residuals"
+  )}
+
+resid_plot_print(lat_lm)
+resid_plot_print(long_lm)
+resid_plot_print(lat_long_lm)
+
+```
+
+In each graph, the mean of the residuals is very low, which is good because it means the average error in predictions is low, but there is a cluster of outliers in each graph that are severely underpredicted. These clusters show that the data simply cannot be modeled linearly. To try and work around this, we attempted to use kNN regression instead. The process of identifying the best k value and normalization/standardization technique is shown below.
+
+``` {r finding the best k}
+normalize <- function(x) {
+  return((x - min(x)) / (max(x) - min(x)))
+}
+
+standardize <- function(x) {
+  return((x - mean(x)) / sd(x))
+}
+
+ufo_norm <- 
+  ufo |> 
+  select(longitude, latitude, seconds) |> 
+  mutate(
+    across(
+      .cols = latitude:longitude,
+      .fns = normalize
+    )
+  )
+
+ufo_stan <- 
+  ufo |> 
+  select(longitude, latitude, seconds) |> 
+  mutate(
+    across(
+      .cols = latitude:longitude,
+      .fns = standardize
+    )
+  )
+
+
+k <- 1:10
+
+
+# try with normalizing
+fit_stats_norm <- 
+  tibble(k = k,
+         R2 = rep(-1, length(k)),
+         MAE = rep(-1, length(k)))
+
+for (i in 1:length(k)) {
+  norm_knn <- 
+    knn.reg(
+      train = ufo_norm,
+      y = ufo$seconds,
+      k = k[i]
+    )
+  
+  fit_stats_norm[i, "R2"] <- norm_knn$R2Pred
+  fit_stats_norm[i, "MAE"] <- (ufo$seconds - norm_knn$pred) |> abs() |> mean()
+}
+
+fit_stats_norm
+
+fit_stats_norm |> 
+  pivot_longer(
+    cols = R2:MAE,
+    names_to = "fit_stat",
+    values_to = "fit"
+  ) |> 
+  
+  ggplot(mapping = aes(x = k,
+                       y = fit,
+                       color = fit_stat)) + 
+  geom_line(show.legend = F) + 
+  facet_wrap(facets = ~ fit_stat,
+             scales = "free_y",
+             ncol = 1)
+
+
+# try with standardizing
+fit_stats_stan <- 
+  tibble(k = k,
+         R2 = rep(-1, length(k)),
+         MAE = rep(-1, length(k)))
+
+for (i in 1:length(k)) {
+  stan_knn <- 
+    knn.reg(
+      train = ufo_stan,
+      y = ufo$seconds,
+      k = k[i]
+    )
+  
+  fit_stats_stan[i, "R2"] <- stan_knn$R2Pred
+  fit_stats_stan[i, "MAE"] <- (ufo$seconds - stan_knn$pred) |> abs() |> mean()
+}
+
+fit_stats_stan
+
+fit_stats_stan |> 
+  pivot_longer(
+    cols = R2:MAE,
+    names_to = "fit_stat",
+    values_to = "fit"
+  ) |> 
+  
+  ggplot(mapping = aes(x = k,
+                       y = fit,
+                       color = fit_stat)) + 
+  geom_line(show.legend = F) + 
+  facet_wrap(facets = ~ fit_stat,
+             scales = "free_y",
+             ncol = 1)
+
+fit_stats_combined <- 
+  bind_rows("stan" = fit_stats_stan,
+            "norm" = fit_stats_norm,
+            .id = "rescale") 
+
+fit_stats_combined |>
+  filter(
+    R2 == max(R2) | MAE == min(MAE)
+    
+  )
+
+norm_knn <-
+  knn.reg(
+    train = ufo_norm,
+    y = ufo$seconds,
+    k = 1
+  )
+
+```
+The fifth table show that the best k value to use is 1, which is typically not a value that produces accurate regression models. Because of this, we see that kNN regression is also not a viable method of machine learning.
 

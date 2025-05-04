@@ -414,7 +414,7 @@ norm_knn <-
 ```
 
 ### Observations
-* The best way to go about kNN regression is to use a standardized dataset with a k value of 2. This is true because this gives the highest R^2 value of 0.8.
+* The best way to go about kNN regression is to use a normalized data set with a k value of 1. This is true because this gives the highest R^2 value of 0.8 and MAE of 296.486.
 
 ---
 
