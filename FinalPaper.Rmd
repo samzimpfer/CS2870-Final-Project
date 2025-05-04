@@ -14,12 +14,12 @@ pacman::p_load(gapminder, socviz, tidyverse, grid, ggthemes,
 ```
 
 ## Introduction
-  The data we were working with came from a data set called "UFO sightings scrubbed" that was found on Kaggle.com from a user named Akhil Goyal. The data was last updated three months ago, making it quite recent data. It contains information on all UFO sightings dating back to 1906. The data could have some bias if ufo sighitngs from certain regions of the world were not recorded or included in this data set, additionally it is observational data collected by different people around the globe which can create large amounts of variation in the data. 
-  This data is of interest because UFOs have been a topic of public debate for years. With increasing amounts of interest in space travel and extraterrestrials in more recent years, the facinations with UFOs has only grown stronger. For this project we want to explore what influences sightings as this can be valuable knowledge for those trying to investigate UFOs. 
-  In order to work with our data we had to clean it. This includeded converting the datetime column into year, month, day, seconds, minutes, hours format. Then we created a new data set where we added columns for years, seconds, and months and kept the updated datetime, city, state, country, longitude, and latitude columns. We then had to convert both longitude and latitude into numeric values in order to work with them. The code for this data cleaning follows: 
+  The data we were working with came from a data set called "UFO sightings scrubbed" that was found on Kaggle.com from a user named Akhil Goyal. The data was last updated three months ago, making it quite recent data. It contains information on all UFO sightings dating back to 1906. The data could have some bias if ufo sightings from certain regions of the world were not recorded or included in this data set, additionally it is observational data collected by different people around the globe which can create large amounts of variation in the data. 
+  This data is of interest because UFOs have been a topic of public debate for years. With increasing amounts of interest in space travel and extraterrestrials in more recent years, the fascinations with UFOs has only grown stronger. For this project we want to explore what influences sightings as this can be valuable knowledge for those trying to investigate UFOs. 
+  In order to work with our data we had to clean it. This included converting the datetime column into year, month, day, seconds, minutes, hours format. Then we created a new data set where we added columns for years, seconds, and months and kept the updated datetime, city, state, country, longitude, and latitude columns. We then had to convert both longitude and latitude into numeric values in order to work with them. The code for this data cleaning follows: 
 
 
-```{r cars}
+```{r clean data}
 ufo_raw <- read.csv("ufo_sightings_scrubbed.csv")
 
 #convert date time to ymd_hms format
@@ -30,16 +30,23 @@ ufo_raw|>
    mutate(seconds = duration..seconds.,
           year = year(datetime), #create year column
           month = month.name[month(datetime)])|> #create month column and convert to name  
-  select(datetime, city, state, country, seconds,latitude,longitude, year, month) -> ufo
+  select(datetime, city, state, country, seconds,latitude,longitude, year, month)|>
+    filter(seconds <= 40000) |> 
+    # filter out badly formatted entries that could cause NA's during the following conversion
+    filter(grepl("^[-]?[0-9.]+$", latitude),
+           grepl("^[-]?[0-9.]+$", seconds)) -> ufo
+
   
 ufo$latitude <- as.numeric(ufo$latitude) #changing lat to numeric
 ufo$seconds <- as.numeric(ufo$seconds) #changing seconds to numeric
+
+ufo <- ufo |> drop_na(longitude, latitude, seconds)
 
 ```
 
 ## Data Analysis 
 
-The first question we had about UFO sightings is how the location around the world influenced the number of UFO sightings that occurred. We began by creating histograms for longitude and latitude. From there we created a scatter plot to compare lattitude and longitude to see if there was a relationship between the two of them. 
+The first question we had about UFO sightings is how the location around the world influenced the number of UFO sightings that occurred. We began by creating histograms for longitude and latitude. From there we created a scatter plot to compare latitude and longitude to see if there was a relationship between the two of them. 
 
 ```{r, echo = FALSE}
 long_hist <- ggplot(
@@ -79,8 +86,76 @@ lat_hist <- ggplot(
 ```{r, echo = FALSE}
 long_hist
 ```
-When looking at the histogram of longitude, we notice there are two main peaks within the spread. One peak is around -120 and the seconds is around -80. We also noticed that there 
+When looking at the histogram of longitude, we notice there are two main peaks within the spread. One peak is around -120 and the seconds is around -80. This make sense because these are the longitudes that correspond with highly populated areas of the US. The relative height of these peaks implies that there are considerably more sightings in the US than anywhere else in the world. This observation can be interpreted in multiple ways, either that UFO's are more commonly reported in the US than anywhere else (either accurately or inaccurately), or that there really are more UFO visits in the US than anywhere else. We can't make a solid distinguishment between these two based on the data, but we can clearly see that there have been more reports around the US.
 
 ```{r, echo = FALSE}
 lat_hist
 ```
+In the latitude histogram, we see than sightings are most prevalent around 40. Again, this corresponds to the coordinates of the US and also Europe, which is the second most frequently reported area of UFO sightings. This data supports the same conclusions we see from the longitude histogram.
+
+
+```{r , map }
+map <- map_data("world")
+
+map_plot <- ggplot()+
+  geom_polygon(data = map,
+               mapping = aes(x= long,
+                             y = lat,
+                             group = group),
+               fill = "darkgreen")+
+  geom_point(data = filter(ufo, seconds < 40000),
+             mapping = aes(x = longitude,
+                           y = latitude,
+                           color = seconds),
+             size = 0.3
+           )+
+  labs(
+    x = "Longitude",
+    y = "Latitude"
+  )+
+scale_y_continuous(expand = c(0, 0, 0.05, 0))+
+  ylim(-60,90)
+
+map_plot
+```
+Here, we can see in greater detail the geographical dispersion of the sightings. The graph supports the same claims as the previous two graphs. We can also see from the color coding based on duration that most of the sightings are pretty short.
+
+
+The next question we had was how the number of sightings had increase or decreased over the full epoch of time that the data set spans. We created a histogram of sightings per group of 5 years to answer this question. 
+
+```{r, bar graph of sightings per year}
+ggplot( data = ufo,
+        mapping = aes(x = year))+
+  geom_histogram(fill = "hotpink",
+                 color = "black",
+                 bins = 20)+
+  labs(
+    x = "Year",
+    y = "Number of Sightings"
+  )+
+scale_y_continuous(expand = c(0, 0, 0.05, 0))
+```
+The histogram shows that UFO sightings were relatively infrequent in the early 1900's. Sightings gradually started to increase during the 1950's and then there was a sharp increase at the end of the 1990's and into the 2000's. The number of sightings seems to start to plateau past 2005 also, so it would interesting to see whether the data plateaus in the long term after this point or if it would continue to increase beyond a certain point. This pattern might indicate developments in human history that could be of interest to extraterrestrial beings.
+
+
+```{r, small multiples}
+# create table of year, month, number of sightings
+summary <- ufo |> filter(year >= 2000) |> group_by(year, month) |> summarise(count = n())
+
+# order data by natural month ordering
+summary$month <- factor(summary$month, levels = month.name)
+summary <- summary |> arrange(year, month)
+
+ggplot(data = summary,
+       mapping = aes(x = month,
+                     y = count,
+                     group = 1)) +
+  geom_line() +
+  labs(x = "Month",
+       y = "Number of Sightings") +
+  scale_y_continuous(expand = c(0, 0, 0.05, 0)) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  facet_wrap(~ year)
+```
+Here we have a small multiples graph which shows the seasonal trends in UFO data since the year 2000. Like the previous graph, these graphs also show that total UFO sightings have increased since 2000. Before 2009 sightings are generally consistent over the years. In 2009 we can see the first real peak during the summer. This trend seems to be reflected in the following years since then. It's possible that this is simply because more people are outdoors at this time of year, so more UFO visits are reported as sightings. Because of this highly plausible explanation, we can't necessarily determine from the data whether there was an actual increase in UFO visits in the summers. This highlights to disconnect between UFO sightings are UFO visits. 
+

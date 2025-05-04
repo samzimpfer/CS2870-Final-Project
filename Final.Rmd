@@ -31,7 +31,7 @@ The variables used are:
 **year**: year when sighing occurred \
 **month**: month when sighting occured \
 
-```{r cars}
+```{r clean data}
 ufo_raw <- read.csv("ufo_sightings_scrubbed.csv")
 
 #convert date time to ymd_hms format
@@ -43,13 +43,14 @@ ufo_raw|>
           year = year(datetime), #create year column
           month = month.name[month(datetime)])|> #create month column and convert to name  
   select(datetime, city, state, country, seconds,latitude,longitude, year, month)|>
-    filter(seconds <= 40000) -> ufo
-
+    filter(seconds <= 40000) |> 
+    # filter out badly formatted entries that could cause NA's during the following conversion
+    filter(grepl("^[-]?[0-9.]+$", latitude),
+           grepl("^[-]?[0-9.]+$", seconds)) -> ufo
 
   
 ufo$latitude <- as.numeric(ufo$latitude) #changing lat to numeric
 ufo$seconds <- as.numeric(ufo$seconds) #changing seconds to numeric
-
 
 ufo <- ufo |> drop_na(longitude, latitude, seconds)
 
@@ -176,28 +177,6 @@ scale_y_continuous(expand = c(0, 0, 0.05, 0))
 ```
 ### Observations
 UFO sightings were relatively infrequent in the early 1900's. Sightings gradually started to increase during the 1950's and then there was a sharp increase at the end of the 1990's and into the 2000's. 
-
-
-```{r, bar graph of sightings per month}
-by_month <- ggplot( data = ufo,
-        mapping = aes(x = month))+
-  geom_bar(fill = "purple",
-                 color = "black")+
-  labs(
-    x = "Month",
-    y = "Number of Sightings"
-  )+
-scale_y_continuous(expand = c(0, 0, 0.05, 0))+
-theme(
-  axis.text = element_text( angle = 90
-     )
-)
-by_month
-```
-### Observations
-Over the years, UFO sightings have been most common during June, July, and August. The fewest occurances happend during February. 
-
-
 
 ---
 
