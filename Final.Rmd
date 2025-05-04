@@ -4,6 +4,7 @@ author: "Shealagh Brown & Sam Zimpfer"
 date: "2025-03-20"
 output:
   html_document: default
+  word_document: default
   pdf_document: default
 ---
 
@@ -242,78 +243,46 @@ bind_rows(
   ) |> 
 select(explanatories, r.squared, adj.r.squared, sigma)  
 
-lat_long_lm |> 
-  tidy()
+
 ```
-
-
 ## Residual Plots for Duration of Sightings vs Longitude and Lattitude
 ```{r, residual plots}
-
-show_resid_plot <- function(model, name) {
-  augment_columns(x = model, 
-                  data = ufo_trimmed) |> 
-    ggplot(mapping = aes(x = .fitted,
-                         y = .resid)) + 
-    geom_point() + 
-    geom_hline(yintercept = 0,
-               color = "darkred",
-               linetype = "dashed",
-               linewidth = 1) + 
-    geom_smooth(method = "loess",
-                se = F) + 
-    labs(title = paste(name, "Residuals"),
-         y = ".resid (seconds)")
-}
-
-show_resid_plots_split <- function(model, name) {
-  # classify data as short duration or long duration
-  augmented <- augment_columns(x = model,
-                               data = ufo) |>
-    mutate(long = abs(.resid) > 0.25 * sd(.resid, na.rm = TRUE))
-
-  graph_short <- augmented |>
-    filter(!long) |>
-    ggplot(aes(x = .fitted,
-               y = .resid)) +
-    geom_point(alpha = 0.6) +
-    geom_hline(yintercept = 0,
-               linetype = "dashed",
-               color = "darkred") +
-    geom_smooth(method = "loess",
-                se = FALSE) +
-    labs(title = paste(name, "Residuals (Short duration)"),
-         y = ".resid (seconds)")
+resid_plot_print <- function(model) {
+  augment_columns(
+  x = model, 
+  data = ufo
+) |> 
   
-  print(graph_short)
+  ggplot(
+    mapping = aes(
+      x = .fitted,
+      y = .resid
+    )
+  ) + 
   
+  geom_point(alpha = 0.5) + 
   
-  graph_long <- augmented |>
-    filter(long) |>
-    ggplot(aes(x = .fitted,
-               y = .resid)) +
-    geom_point(alpha = 0.6) +
-    geom_hline(yintercept = 0,
-               linetype = "dashed",
-               color = "darkred") +
-    labs(title = paste(name, "Residuals (Long duration)"),
-         y = ".resid (seconds log10)") +
-    scale_y_log10()
+  geom_hline(
+    yintercept = 0,
+    color = "red",
+    linewidth = 1
+  ) + 
   
-  print(graph_long)
-}
+  labs(
+    x = "Predicted",
+    y = "Residuals"
+  )}
 
-show_resid_plots_split(lat_lm, "Latitude Model")
-show_resid_plots_split(long_lm, "Longitude Model")
-show_resid_plots_split(lat_long_lm, "Latitude + Longitude Model")
-
+resid_plot_print(lat_lm)
+resid_plot_print(long_lm)
+resid_plot_print(lat_long_lm)
 
 ```
 
+
+
 ### Observations
-* The model behaves slightly strangely, likely because sightings that are concentrated around certain longitudes and latitudes are being interpreted linearly
-* There are much more positive residuals than negative residuals, however the line of best fit through the points is close to or less than 0. This indicates that most of the sightings were very short, and the much smaller portion that are significantly longer do not get predicted well by the model
-* Our consensus is that because of the inaccuracy in predicting long-duration sightings, a linear regression model cannot be used to correctly predict the duration of UFO sightings based on longitude and latitude.
+
 
 ---
 
@@ -334,7 +303,7 @@ ufo_norm <-
   select(longitude, latitude, seconds) |> 
   mutate(
     across(
-      .cols = everything(),
+      .cols = latitude:longitude,
       .fns = normalize
     )
   )
@@ -344,13 +313,13 @@ ufo_stan <-
   select(longitude, latitude, seconds) |> 
   mutate(
     across(
-      .cols = everything(),
+      .cols = latitude:longitude,
       .fns = standardize
     )
   )
 
 
-k <- 1:20
+k <- 1:10
 
 
 # try with normalizing
@@ -360,15 +329,15 @@ fit_stats_norm <-
          MAE = rep(-1, length(k)))
 
 for (i in 1:length(k)) {
-  loop_knn <- 
+  norm_knn <- 
     knn.reg(
       train = ufo_norm,
       y = ufo$seconds,
       k = k[i]
     )
   
-  fit_stats_norm[i, "R2"] <- loop_knn$R2Pred
-  fit_stats_norm[i, "MAE"] <- (ufo$seconds - loop_knn$pred) |> abs() |> mean()
+  fit_stats_norm[i, "R2"] <- norm_knn$R2Pred
+  fit_stats_norm[i, "MAE"] <- (ufo$seconds - norm_knn$pred) |> abs() |> mean()
 }
 
 fit_stats_norm
@@ -396,15 +365,15 @@ fit_stats_stan <-
          MAE = rep(-1, length(k)))
 
 for (i in 1:length(k)) {
-  loop_knn <- 
+  stan_knn <- 
     knn.reg(
       train = ufo_stan,
       y = ufo$seconds,
       k = k[i]
     )
   
-  fit_stats_stan[i, "R2"] <- loop_knn$R2Pred
-  fit_stats_stan[i, "MAE"] <- (ufo$seconds - loop_knn$pred) |> abs() |> mean()
+  fit_stats_stan[i, "R2"] <- stan_knn$R2Pred
+  fit_stats_stan[i, "MAE"] <- (ufo$seconds - stan_knn$pred) |> abs() |> mean()
 }
 
 fit_stats_stan
@@ -423,6 +392,25 @@ fit_stats_stan |>
   facet_wrap(facets = ~ fit_stat,
              scales = "free_y",
              ncol = 1)
+
+fit_stats_combined <- 
+  bind_rows("stan" = fit_stats_stan,
+            "norm" = fit_stats_norm,
+            .id = "rescale") 
+
+fit_stats_combined |>
+  filter(
+    R2 == max(R2) | MAE == min(MAE)
+    
+  )
+
+norm_knn <-
+  knn.reg(
+    train = ufo_norm,
+    y = ufo$seconds,
+    k = 1
+  )
+
 ```
 
 ### Observations
@@ -431,38 +419,13 @@ fit_stats_stan |>
 ---
 
 
-## Making the kNN regression model
-``` {r making the knn regression model}
-# splitting data into training and testing
-knn_train <- sample_frac(ufo, 0.5)
-knn_test <- sample_frac(ufo, 0.5)
+## Making the kNN regression
+``` {r making the regression tree}
 
+```
 
-tree_full <- 
-  rpart(
-    formula = seconds ~ longitude + latitude,
-    data = knn_train,
-    method = "anova",
-    minsplit = 2,
-    minbucket = 1,
-    cp = -1
-  )
+``` {r regression tree cont.}
 
-# Predicting the duration for ufo data
-predict(
-  object = tree_full
-) ->
-  pred_duration
-
-
-bind_rows("predicted" = summary(pred_duration),
-          "actual" = summary(knn_test$seconds),
-          .id = "income")
-
-knn_train |> mutate(pred_duration = pred_duration) |> 
-  summarize(
-    "R2_full" = cor(pred_duration, seconds)^2
-  )
 ```
 
 ### Observations
