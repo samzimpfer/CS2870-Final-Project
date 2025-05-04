@@ -10,7 +10,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 pacman::p_load(gapminder, socviz, tidyverse, grid, ggthemes,
-               usmap, maps, statebins, viridis, leaflet, lubridate, broom, GGally) 
+               usmap, maps, statebins, viridis, leaflet, lubridate, broom, GGally, rpart, rpart.plot, FNN) 
 theme_bw()
 ```
 
@@ -43,11 +43,15 @@ ufo_raw|>
           year = year(datetime), #create year column
           month = month.name[month(datetime)])|> #create month column and convert to name  
   select(datetime, city, state, country, seconds,latitude,longitude, year, month)|>
-    filter(seconds <= 40000) |> 
-    drop_na(longitude, latitude, seconds) -> ufo
+    filter(seconds <= 40000) -> ufo
+
+
   
 ufo$latitude <- as.numeric(ufo$latitude) #changing lat to numeric
 ufo$seconds <- as.numeric(ufo$seconds) #changing seconds to numeric
+
+
+ufo <- ufo |> drop_na(longitude, latitude, seconds)
 
 ```
 
@@ -228,23 +232,6 @@ We want to conduct linear regression to determine the effect that longitude and 
 
 ---
 
-
-## Correlation Plot for lattitude, longitude, and seconds
-```{r, correlation plot}
-ufo|>
-  select(seconds:longitude)|>
-ggcorr(
-  low = "red3",
-  mid = "white",
-  high ="blue",
-  label = T,
-  label_round = 2,
-  angle = -45
-)
-
-```
-
----
 
 ## Setting up linear regression models
 ```{r,  models}
