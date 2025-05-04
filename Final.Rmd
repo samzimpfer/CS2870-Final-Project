@@ -43,7 +43,8 @@ ufo_raw|>
           year = year(datetime), #create year column
           month = month.name[month(datetime)])|> #create month column and convert to name  
   select(datetime, city, state, country, seconds,latitude,longitude, year, month)|>
-    filter(seconds <= 40000) -> ufo
+    filter(seconds <= 40000) |> 
+    drop_na(longitude, latitude, seconds) -> ufo
   
 ufo$latitude <- as.numeric(ufo$latitude) #changing lat to numeric
 ufo$seconds <- as.numeric(ufo$seconds) #changing seconds to numeric
@@ -354,9 +355,6 @@ show_resid_plots_split(lat_long_lm, "Latitude + Longitude Model")
 ## Setting up kNN regression- Finding the best k
 
 ``` {r finding the best k}
-ufo_filtered <- 
-  ufo |> drop_na(longitude, latitude, seconds)
-
 normalize <- function(x) {
   return((x - min(x)) / (max(x) - min(x)))
 }
@@ -366,7 +364,7 @@ standardize <- function(x) {
 }
 
 ufo_norm <- 
-  ufo_filtered |> 
+  ufo |> 
   select(longitude, latitude, seconds) |> 
   mutate(
     across(
@@ -376,7 +374,7 @@ ufo_norm <-
   )
 
 ufo_stan <- 
-  ufo_filtered |> 
+  ufo |> 
   select(longitude, latitude, seconds) |> 
   mutate(
     across(
@@ -399,12 +397,12 @@ for (i in 1:length(k)) {
   loop_knn <- 
     knn.reg(
       train = ufo_norm,
-      y = ufo_filtered$seconds,
+      y = ufo$seconds,
       k = k[i]
     )
   
   fit_stats_norm[i, "R2"] <- loop_knn$R2Pred
-  fit_stats_norm[i, "MAE"] <- (ufo_filtered$seconds - loop_knn$pred) |> abs() |> mean()
+  fit_stats_norm[i, "MAE"] <- (ufo$seconds - loop_knn$pred) |> abs() |> mean()
 }
 
 fit_stats_norm
@@ -435,12 +433,12 @@ for (i in 1:length(k)) {
   loop_knn <- 
     knn.reg(
       train = ufo_stan,
-      y = ufo_filtered$seconds,
+      y = ufo$seconds,
       k = k[i]
     )
   
   fit_stats_stan[i, "R2"] <- loop_knn$R2Pred
-  fit_stats_stan[i, "MAE"] <- (ufo_filtered$seconds - loop_knn$pred) |> abs() |> mean()
+  fit_stats_stan[i, "MAE"] <- (ufo$seconds - loop_knn$pred) |> abs() |> mean()
 }
 
 fit_stats_stan
@@ -470,8 +468,8 @@ fit_stats_stan |>
 ## Making the kNN regression model
 ``` {r making the knn regression model}
 # splitting data into training and testing
-knn_train <- sample_frac(ufo_filtered, 0.5)
-knn_test <- sample_frac(ufo_filtered, 0.5)
+knn_train <- sample_frac(ufo, 0.5)
+knn_test <- sample_frac(ufo, 0.5)
 
 
 tree_full <- 
