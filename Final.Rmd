@@ -4,6 +4,7 @@ author: "Shealagh Brown & Sam Zimpfer"
 date: "2025-03-20"
 output:
   html_document: default
+  word_document: default
   pdf_document: default
 ---
 
