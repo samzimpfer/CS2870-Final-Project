@@ -14,8 +14,8 @@ pacman::p_load(gapminder, socviz, tidyverse, grid, ggthemes,
 ```
 
 ## Introduction
-  The data we were working with came from a data set called "UFO sightings scrubbed" that was found on Kaggle.com from a user named Akhil Goyal. The data was last updated three months ago, making it quite recent data. It contains information on all UFO sightings dating back to 1906. The data could have some bias if ufo sighitngs from certain regions of the world were not recorded or included in this data set, additionally it is observational data collected by differnt people around the globe which can create large amounts of variation in the data. 
-  This data is of interest because UFOs have been a topic of public debate for years. With increasing amounts of interest in space travel and extraterrestrials in more recent years, the facinations with UFOs has only grown stronger. For this project we want to explore what influiences sightings as this can be valuable knowledge for those trying to investigate UFOs. 
+  The data we were working with came from a data set called "UFO sightings scrubbed" that was found on Kaggle.com from a user named Akhil Goyal. The data was last updated three months ago, making it quite recent data. It contains information on all UFO sightings dating back to 1906. The data could have some bias if ufo sighitngs from certain regions of the world were not recorded or included in this data set, additionally it is observational data collected by different people around the globe which can create large amounts of variation in the data. 
+  This data is of interest because UFOs have been a topic of public debate for years. With increasing amounts of interest in space travel and extraterrestrials in more recent years, the facinations with UFOs has only grown stronger. For this project we want to explore what influences sightings as this can be valuable knowledge for those trying to investigate UFOs. 
   In order to work with our data we had to clean it. This includeded converting the datetime column into year, month, day, seconds, minutes, hours format. Then we created a new data set where we added columns for years, seconds, and months and kept the updated datetime, city, state, country, longitude, and latitude columns. We then had to convert both longitude and latitude into numeric values in order to work with them. The code for this data cleaning follows: 
 
 
@@ -39,7 +39,8 @@ ufo$seconds <- as.numeric(ufo$seconds) #changing seconds to numeric
 
 ## Data Analysis 
 
-The first question we had about UFO sightings is how the location around the world influienced 
+The first question we had about UFO sightings is how the location around the world influenced the number of UFO sightings that occurred. We began by creating histograms for longitude and latitude. From there we created a scatter plot to compare lattitude and longitude to see if there was a relationship between the two of them. 
+
 ```{r, echo = FALSE}
 long_hist <- ggplot(
   data = ufo,
@@ -73,6 +74,13 @@ lat_hist <- ggplot(
   scale_x_continuous(breaks = seq(-100, 100, 20))+
   scale_y_continuous(expand = c(0, 0, 0.05, 0))
 
+```
+
+```{r, echo = FALSE}
 long_hist
+```
+When looking at the histogram of longitude, we notice there are two main peaks within the spread. One peak is around -120 and the seconds is around -80. We also noticed that there 
+
+```{r, echo = FALSE}
 lat_hist
 ```
