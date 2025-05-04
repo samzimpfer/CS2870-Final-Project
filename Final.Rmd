@@ -432,10 +432,6 @@ norm_knn <-
     k = 1
   )
 
-
-
-# let's look at our fit statistics: R2 and rmse
-
 ```
 
 ### Observations
@@ -450,20 +446,7 @@ norm_knn <-
 ```
 
 ``` {r regression tree cont.}
-# Predicting the duration for ufo data
-predict(
-  object = tree_full
-) ->
-  pred_duration
 
-bind_rows("predicted" = summary(pred_duration),
-          "actual" = summary(knn_test$seconds),
-          .id = "income")
-
-knn_train |> mutate(pred_duration = pred_duration) |> 
-  summarize(
-    "R2_full" = cor(pred_duration, seconds)^2
-  )
 ```
 
 ### Observations
