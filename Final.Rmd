@@ -136,31 +136,6 @@ map_plot
 From the histograms, we noticed that most ufo sightings are concentrated around -120 through -70 longitude and 30 through 50 latitudes. When longitude and latitude are graphed against each other and over layed with a map of the word we can see that these values correspond with a high volume of sightings in the United States. This graph also indicates other potential hot spots of sightings, specifically Europe and the eastern coast of Australia. 
 
 
----
-
-
-## Bar graph of sightings per country
-```{r, bar graph of countries and cities}
-
-modified_data = ufo |> filter(country != "")
-
-ggplot(data = modified_data,
-       mapping = aes(x = country))+
-  geom_bar(fill = "blue4",
-           color = "black",
-           na.rm = T)+
-scale_y_log10(expand = c(0, 0, 0.05, 0))+
-  labs(title = "Total number of sightings per country",
-       x = "Country",
-       y = "Count (log10 scale)")+
-scale_x_discrete(labels = c("Australia", "Canada", "Denmark", "Great Britian", "United States"))
-  
-         
-```
-
-From this graph we can determine that the United States is the country with the most sightings. There is a signficantly higher amount of sightings in the U.S. as opposed to the other countries as it is the only country with greater than 10,000 sightings. Of the five highest countries with sighitngs, Denmark has the lowest amount of sightings. They have just around 100 sighitngs reported. 
-
----
 
 
 ## Bar graph of sightings per year
@@ -436,6 +411,7 @@ table(actual = ufo$month,
 
 
 ```
+
 ``` {r classification tree}
 
 
@@ -493,4 +469,3 @@ summary(object = pruned_tree,
 ```
 
 
-### Observations
