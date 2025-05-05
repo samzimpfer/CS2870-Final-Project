@@ -269,8 +269,9 @@ resid_plot_print <- function(model) {
   ) + 
   
   labs(
-    x = "Predicted",
-    y = "Residuals"
+    x = paste("Predicted Values"),
+    y = "Residuals",
+    title = paste("Residual plot for" , model 
   )}
 
 resid_plot_print(lat_lm)
