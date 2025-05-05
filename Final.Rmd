@@ -11,7 +11,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 pacman::p_load(gapminder, socviz, tidyverse, grid, ggthemes,
-               usmap, maps, statebins, viridis, leaflet, lubridate, broom, GGally, rpart, rpart.plot, FNN) 
+               usmap, maps, statebins, viridis, leaflet, lubridate, broom, GGally, rpart, rpart.plot, FNN, class, caret) 
 theme_bw()
 ```
 
