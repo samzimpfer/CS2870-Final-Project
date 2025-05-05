@@ -1,5 +1,5 @@
 ---
-title: "UFO"
+title: "UFO code"
 author: "Shealagh Brown & Sam Zimpfer"
 date: "2025-03-20"
 output:
@@ -22,8 +22,6 @@ theme_bw()
 
 ## Cleaning the data
 
-The code chunk below reads in our data about UFO sightings. We had to convert the datetime variable to year, month, date format. Then we created a new data frame containing only necessary variables for our purposes. Latitude had to then be convered into a numeric variable.
-
 The variables used are:
 **datetime**: the date and time of sighting in year, month, day, hours, minutes, seconds format. \
 **city**: city where sighitng occurred \
@@ -33,7 +31,7 @@ The variables used are:
 **latitude**: latitude of sighting \
 **longitude**: longitude of sighing \
 **year**: year when sighing occurred \
-**month**: month when sighting occured \
+**month**: month when sighting occurred \
 
 ```{r clean data}
 ufo_raw <- read.csv("ufo_sightings_scrubbed.csv")
@@ -108,6 +106,7 @@ lat_hist <- ggplot(
   scale_x_continuous(breaks = seq(-100, 100, 20))+
   scale_y_continuous(expand = c(0, 0, 0.05, 0))
 
+#display both graphs
 long_hist
 lat_hist
 ```
@@ -117,6 +116,7 @@ lat_hist
 
 Next, we overlayed the coordinates of the sightings on a map of the world to better visualize.
 ```{r , map }
+#createing scatter plot ontop of world map
 map <- map_data("world")
 
 map_plot <- ggplot()+
@@ -138,18 +138,19 @@ map_plot <- ggplot()+
 scale_y_continuous(expand = c(0, 0, 0.05, 0))+
   ylim(-60,90)
 
+#displaying map plot 
 map_plot
 ```
 
-### Observations
-From the histograms, we noticed that most ufo sightings are concentrated around -120 through -70 longitude and 30 through 50 latitudes. When longitude and latitude are graphed against each other and over layed with a map of the word we can see that these values correspond with a high volume of sightings in the United States. This graph also indicates other potential hot spots of sightings, specifically Europe and the eastern coast of Australia. 
 
 ---
 
 
 ## Bar graph of sightings per year
 ```{r, bar graph of sightings per year}
-ggplot( data = ufo,
+
+#creating plot of sightings per year
+sightings_year<- ggplot( data = ufo,
         mapping = aes(x = year))+
   geom_histogram(fill = "hotpink",
                  color = "black",
@@ -159,10 +160,9 @@ ggplot( data = ufo,
     y = "Number of Sightings"
   )+
 scale_y_continuous(expand = c(0, 0, 0.05, 0))
-```
 
-### Observations
-UFO sightings were relatively infrequent in the early 1900's. Sightings gradually started to increase during the 1950's and then there was a sharp increase at the end of the 1990's and into the 2000's. 
+sightings_year
+```
 
 ---
 
@@ -177,7 +177,7 @@ summary$month <- factor(summary$month, levels = month.name)
 summary <- summary |> arrange(year, month)
 
 # create small multiples graph
-ggplot(data = summary,
+months_by_year <- ggplot(data = summary,
        mapping = aes(x = month,
                      y = count,
                      group = 1)) +
@@ -187,19 +187,15 @@ ggplot(data = summary,
   scale_y_continuous(expand = c(0, 0, 0.05, 0)) +
   theme(axis.text.x = element_text(angle = 90)) +
   facet_wrap(~ year)
+
+#display graph
+months_by_year
 ```
 
-### Observations
-When we compare how sightings per month has changed over time we see that generally the amount of sighitngs has increased. Before 2009 sightinga are generally conisistent over the year. In 2009 we can see the first real peak during the summer. This trend seems to be reflected in the following years since then. 
-
----
 
 
 #Machine Learning
 
-We want to conduct linear regression to determine the effect that longitude and latitude have on the durration of sighitngs. Before we create a model we will check for 
-
----
 
 
 ## Setting up linear regression models
@@ -268,44 +264,45 @@ resid_plot_print <- function(model, title) {
     x = "Predicted Values",
     y = "Residuals",
     title = paste("Residual Plot for" , title , "Model"
-  )) }
+    )) }
 
+#display residual plots
 resid_plot_print(lat_lm, "Latitude")
 resid_plot_print(long_lm, "Longitude" )
 resid_plot_print(lat_long_lm, "Longitude and Latitude" )
 
 ```
 
-### Observations
-
----
 
 
-## Setting up kNN regression- Finding the best k
 
-``` {r finding the best k}
-# normalize and standardizing the data
+
+
+## kNN regression
+
+``` {r , echo=FALSE,  kNNreg }
+#creating normalizing function
 normalize <- function(x) {
   return((x - min(x)) / (max(x) - min(x)))
 }
-
+#creating standardizing function
 standardize <- function(x) {
   return((x - mean(x)) / sd(x))
 }
-
+#normalizing explanatory variables
 ufo_norm <- 
   ufo |> 
-  select(longitude, latitude, month) |> 
+  select(longitude, latitude, seconds) |> 
   mutate(
     across(
       .cols = latitude:longitude,
       .fns = normalize
     )
   )
-
+#standardizing explanatory variables 
 ufo_stan <- 
   ufo |> 
-  select(longitude, latitude, month) |> 
+  select(longitude, latitude, seconds) |> 
   mutate(
     across(
       .cols = latitude:longitude,
@@ -314,29 +311,30 @@ ufo_stan <-
   )
 
 
-# cycling through options for best k and better method of normalizing or standardizing 
-k <- 1:20
+k <- 1:100
 
-# try with normalizing
+
+# kNN with normalizing data
+
+#making data frame for normalized stats
 fit_stats_norm <- 
-  tibble(k = k,
+  data.frame(k = k,
          R2 = rep(-1, length(k)),
          MAE = rep(-1, length(k)))
-
+#creating kNN loop
 for (i in 1:length(k)) {
   norm_knn <- 
     knn.reg(
       train = ufo_norm,
-      y = ufo$month,
+      y = ufo$seconds,
       k = k[i]
     )
   
   fit_stats_norm[i, "R2"] <- norm_knn$R2Pred
-  fit_stats_norm[i, "MAE"] <- (ufo$month - norm_knn$pred) |> abs() |> mean()
+  fit_stats_norm[i, "MAE"] <- (ufo$seconds - norm_knn$pred) |> abs() |> mean()
 }
 
-fit_stats_norm
-
+#plotting normalized kNN fit stats
 fit_stats_norm |> 
   pivot_longer(
     cols = R2:MAE,
@@ -350,29 +348,32 @@ fit_stats_norm |>
   geom_line(show.legend = F) + 
   facet_wrap(facets = ~ fit_stat,
              scales = "free_y",
-             ncol = 1)
+             ncol = 1)+
+  labs(title = "Fit Statistics for Normalized data")
 
 
-# try with standardizing
+# kNN standardizing
+
+#creating data frame for standardized stats
 fit_stats_stan <- 
-  tibble(k = k,
+  data.frame(k = k,
          R2 = rep(-1, length(k)),
          MAE = rep(-1, length(k)))
-
+#making kNN loop
 for (i in 1:length(k)) {
   stan_knn <- 
     knn.reg(
       train = ufo_stan,
-      y = ufo$month,
+      y = ufo$seconds,
       k = k[i]
     )
   
   fit_stats_stan[i, "R2"] <- stan_knn$R2Pred
-  fit_stats_stan[i, "MAE"] <- (ufo$month - stan_knn$pred) |> abs() |> mean()
+  fit_stats_stan[i, "MAE"] <- (ufo$seconds - stan_knn$pred) |> abs() |> mean()
 }
 
-fit_stats_stan
 
+#plotting standarsized kNN fit stats
 fit_stats_stan |> 
   pivot_longer(
     cols = R2:MAE,
@@ -386,39 +387,163 @@ fit_stats_stan |>
   geom_line(show.legend = F) + 
   facet_wrap(facets = ~ fit_stat,
              scales = "free_y",
-             ncol = 1)
+             ncol = 1)+
+  labs(title = "Fit Statistics for Standardized data")
 
-
-# show a table of results
+#combining for comparison
 fit_stats_combined <- 
   bind_rows("stan" = fit_stats_stan,
             "norm" = fit_stats_norm,
-            .id = "rescale") 
+            .id = "rescale")
 
+#finding best k value
 fit_stats_combined |>
   filter(
     R2 == max(R2) | MAE == min(MAE)
-    
-  )
+    )
 
+
+#the running kNN with best k value and rescale method
 norm_knn <-
   knn.reg(
     train = ufo_norm,
-    y = ufo$month,
+    y = ufo$seconds,
     k = 1
   )
 
 ```
 
-### Observations
-* The best way to go about kNN regression is to use a normalized data set with a k value of 1. This is true because this gives the highest R^2 value of 0.8 and MAE of 296.486.
-
----
-
 
 ## Making the kNN classification
+``` {r , echo=FALSE,  kNNclass }
+
+#normalizing explanatory variables
+ufo_norm <- 
+  ufo |> 
+  select(longitude, latitude, month) |> 
+  mutate(
+    across(
+      .cols = latitude:longitude,
+      .fns = normalize
+    )
+  )
+#standardizing explanatory variables 
+ufo_stan <- 
+  ufo |> 
+  select(longitude, latitude, month) |> 
+  mutate(
+    across(
+      .cols = latitude:longitude,
+      .fns = standardize
+    )
+  )
+
+
+k <- 1:100
+
+
+# kNN with normalizing data
+
+#making data frame for normalized stats
+fit_stats_norm <- 
+  data.frame(k = k,
+         R2 = rep(-1, length(k)),
+         MAE = rep(-1, length(k)))
+#creating kNN loop
+for (i in 1:length(k)) {
+  norm_knn_class <- 
+    knn(
+      train = ufo_norm,
+      y = ufo$month,
+      k = k[i]
+    )
+  
+  fit_stats_norm[i, "R2"] <- norm_knn_class$R2Pred
+  fit_stats_norm[i, "MAE"] <- (ufo$month - norm_knn_class$pred) |> abs() |> mean()
+}
+
+#plotting normalized kNN fit stats
+fit_stats_norm |> 
+  pivot_longer(
+    cols = R2:MAE,
+    names_to = "fit_stat",
+    values_to = "fit"
+  ) |> 
+  
+  ggplot(mapping = aes(x = k,
+                       y = fit,
+                       color = fit_stat)) + 
+  geom_line(show.legend = F) + 
+  facet_wrap(facets = ~ fit_stat,
+             scales = "free_y",
+             ncol = 1)+
+  labs(title = "Fit Statistics for Normalized data")
+
+
+# kNN standardizing
+
+#creating data frame for standardized stats
+fit_stats_stan <- 
+  data.frame(k = k,
+         R2 = rep(-1, length(k)),
+         MAE = rep(-1, length(k)))
+#making kNN loop
+for (i in 1:length(k)) {
+  stan_knn_class <- 
+    knn(
+      train = ufo_stan,
+      y = ufo$month,
+      k = k[i]
+    )
+  
+  fit_stats_stan[i, "R2"] <- stan_knn_class$R2Pred
+  fit_stats_stan[i, "MAE"] <- (ufo$month - stan_knn_class$pred) |> abs() |> mean()
+}
+
+
+#plotting standarsized kNN fit stats
+fit_stats_stan |> 
+  pivot_longer(
+    cols = R2:MAE,
+    names_to = "fit_stat",
+    values_to = "fit"
+  ) |> 
+  
+  ggplot(mapping = aes(x = k,
+                       y = fit,
+                       color = fit_stat)) + 
+  geom_line(show.legend = F) + 
+  facet_wrap(facets = ~ fit_stat,
+             scales = "free_y",
+             ncol = 1)+
+  labs(title = "Fit Statistics for Standardized data")
+
+#combining for comparison
+fit_stats_combined <- 
+  bind_rows("stan" = fit_stats_stan,
+            "norm" = fit_stats_norm,
+            .id = "rescale")
+
+#finding best k value
+fit_stats_combined |>
+  filter(
+    R2 == max(R2) | MAE == min(MAE)
+    )
+
+
+#the running kNN with best k value and rescale method
+norm_knn <-
+  knn.reg(
+    train = ufo_norm,
+    y = ufo$seconds,
+    k = 1
+  )
+
+```
 ``` {r making the kNN classification}
-# make the classification
+
+
+# make the kNN classification tree
 knn_classification <- 
   knn(
     train = ufo_norm |> select(latitude:longitude),
@@ -427,7 +552,7 @@ knn_classification <-
     k = 12
   )
 
-# show a table of the classification
+# create confusion matrix for the classification
 table(actual = ufo$month,
       predicted = knn_classification)|>
   confusionMatrix(positive = "F")
@@ -436,7 +561,7 @@ table(actual = ufo$month,
 ```
 
 ``` {r classification tree}
-# Build the full decision tree here
+# creating full classification tree
 tree_full<-
   rpart(
     formula = month ~ longitude + latitude,
@@ -452,7 +577,7 @@ tree_full<-
 tree_full$cptable |>
   data.frame()|>
   slice_min(xerror, n = 1)|> #finding row with smallest xerror
-  mutate(xcutoff = xerror + xstd) |>#calculate cut off value
+  mutate(xcutoff = xerror + xstd) |> #calculate cut off value
   pull(xcutoff) ->xcutoff
   
 
@@ -461,30 +586,30 @@ tree_full$cptable|>
   data.frame()|>
   filter(xerror < xcutoff)|> #keeping rows with x error less than x cut off
   slice(1)|>
-  pull(CP) -> cp_cutoff
+  pull(CP) -> cp_cutoff #saving the value
 
-
-c("xerror cutoff"= xcutoff,
-  "cp prune value" = cp_cutoff)
 
 # Prune the tree
 prune(tree = tree_full,
       cp = cp_cutoff) -> pruned_tree
 
-# Then plot it:
+#plotting the pruned tree
 rpart.plot(
   x = pruned_tree,
   type = 5,
   extra = 102
 )
 
+#displaying rules for the tree
 rpart.rules(
   x=pruned_tree,
   extra = 4
 )
 
+#finding variable importance for the tree
 varImp(object = pruned_tree)
 
+#summary of the tree(not included in final paper due to length)
 summary(object = pruned_tree,
         digits = 3)
 ```

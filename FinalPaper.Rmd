@@ -8,7 +8,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
  pacman::p_load(gapminder, socviz, tidyverse, grid, ggthemes,
                usmap, maps, statebins, viridis, leaflet, lubridate, broom, GGally, rpart, rpart.plot, FNN, class, caret) 
 ```
@@ -16,7 +16,17 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Introduction
   The data we were working with came from a data set called "UFO sightings scrubbed" that was found on Kaggle.com from a user named Akhil Goyal. The data was last updated three months ago, making it quite recent data. It contains information on all UFO sightings dating back to 1906. The data could have some bias if ufo sightings from certain regions of the world were not recorded or included in this data set, additionally it is observational data collected by different people around the globe which can create large amounts of variation in the data. \
   This data is of interest because UFOs have been a topic of public debate for years. With increasing amounts of interest in space travel and extraterrestrials in more recent years, the fascinations with UFOs has only grown stronger. For this project we want to explore what influences sightings as this can be valuable knowledge for those trying to investigate UFOs. \
-  In order to work with our data we had to clean it. This included converting the datetime column into year, month, day, seconds, minutes, hours format. Then we created a new data set where we added columns for years, seconds, and months and kept the updated datetime, city, state, country, longitude, and latitude columns. We then had to convert both longitude and latitude into numeric values in order to work with them. The code for this data cleaning follows:
+  In order to work with our data we had to clean it. This included converting the datetime column into year, month, day, seconds, minutes, hours format. Then we created a new data set where we added columns for years, seconds, and months and kept the updated datetime, city, state, country, longitude, and latitude columns. We then had to convert both longitude and latitude into numeric values in order to work with them. The variables we used and code for this data cleaning follows: \
+  
+**datetime**: the date and time of sighting in year, month, day, hours, minutes, seconds format. \
+**city**: city where sighitng occurred \
+**state**: state where sighting occurred \
+**country**: country where sighting occurred \
+**seconds**: duration of sightings in seconds \
+**latitude**: latitude of sighting \
+**longitude**: longitude of sighing \
+**year**: year when sighing occurred \
+**month**: month when sighting occurred \
 
 
 ```{r clean data}
@@ -271,7 +281,7 @@ ufo_stan <-
   )
 
 
-k <- 1:10
+k <- 1:100
 
 
 # try with normalizing
@@ -376,13 +386,40 @@ Both the linear regression and kNN regression failed to be good techniques for t
 We were also interested in using machine learning to see if we could use latitude and longitude to predict which month a sighting happened in. We started by using kNN classification because our response variable is categorical and we thought it would be an effective method of predicting month based on longitude and latitude.
 
 ``` {r , echo=FALSE,  kNNclass }
-knn_classification <- 
+
+knn_norm_class <- 
   knn(
     train = ufo_norm |> select(latitude:longitude),
     test = ufo_norm |> select(latitude:longitude),
     cl = ufo$month,
     k = 12
   )
+
+knn_stan_class <- 
+  knn(
+    train = ufo_stan |> select(latitude:longitude),
+    test = ufo_stan |> select(latitude:longitude),
+    cl = ufo$month,
+    k = 12
+  )
+
+knn_acc <-
+  tibble(k = 1:20,
+         norm_acc = rep(-1, length(k)),
+         stan_acc = rep (-1, length(k)))
+
+for ( i in 1:nrow(knn_acc)){
+  knn_norm <- 
+    knn.cv(train = ufo_norm,
+           cl = ufo$month,
+           k = knn_acc[i , 1])
+ knn_acc[i , "norm_acc"] <- mean(knn_norm == ufo$month)
+ knn_stan <- 
+    knn.cv(train = ufo_stan,
+           cl = ufo$month,
+           k = knn_acc[i , 1])
+ knn_acc[i , "stan_acc"] <- mean(knn_stan == ufo$month)
+}
 
 table(actual = ufo$month,
       predicted = knn_classification)|>
