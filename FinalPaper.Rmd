@@ -434,13 +434,19 @@ knn_acc |>
   geom_line() + 
   scale_y_continuous(labels = scales::label_percent())
 
+knn_acc |>
+  pivot_longer(cols = -k,
+               names_to = "rescale_method",
+               values_to = "accuracy")|>
+  slice_max(accuracy)
+
 table(actual = ufo$month,
       predicted = knn_classification)|>
   confusionMatrix(positive = "F")
 
 
 ```
-From the confusion matrix displayed above we see that the accuracy of this model is 22.5 %. While this is a relatively low accuracy it is still a 2.1% higher accuracy rate than if predictions were made based on no information. The matrix also shows that this difference is statisitcally signficant, with a p value of  2.2e-16. So while the model isn't super accurate its still better than if there was no information to base preditions on. 
+From the confusion matrix displayed above we see that the accuracy of this model is 22.5 %. While this is a relatively low accuracy it is still a 2.1% higher accuracy rate than if predictions were made based on no information. The matrix also shows that this difference is statistically significant, with a p value of  2.2e-16. So while the model isn't super accurate its still better than if there was no information to base predictions on. 
 
 ###  Classification Tree
 

@@ -196,8 +196,6 @@ months_by_year
 
 #Machine Learning
 
-
-
 ## Setting up linear regression models
 ```{r,  models}
 # create several models to explain seconds in terms of latitude and/or longitude
@@ -280,7 +278,7 @@ resid_plot_print(lat_long_lm, "Longitude and Latitude" )
 
 ## kNN regression
 
-``` {r , echo=FALSE,  kNNreg }
+``` {r ,  kNNreg }
 #creating normalizing function
 normalize <- function(x) {
   return((x - min(x)) / (max(x) - min(x)))
@@ -415,148 +413,70 @@ norm_knn <-
 
 
 ## Making the kNN classification
-``` {r , echo=FALSE,  kNNclass }
+``` {r ,  kNNclass }
 
-#normalizing explanatory variables
-ufo_norm <- 
-  ufo |> 
-  select(longitude, latitude, month) |> 
-  mutate(
-    across(
-      .cols = latitude:longitude,
-      .fns = normalize
-    )
-  )
-#standardizing explanatory variables 
-ufo_stan <- 
-  ufo |> 
-  select(longitude, latitude, month) |> 
-  mutate(
-    across(
-      .cols = latitude:longitude,
-      .fns = standardize
-    )
-  )
-
-
-k <- 1:100
-
-
-# kNN with normalizing data
-
-#making data frame for normalized stats
-fit_stats_norm <- 
-  data.frame(k = k,
-         R2 = rep(-1, length(k)),
-         MAE = rep(-1, length(k)))
-#creating kNN loop
-for (i in 1:length(k)) {
-  norm_knn_class <- 
-    knn(
-      train = ufo_norm,
-      y = ufo$month,
-      k = k[i]
-    )
-  
-  fit_stats_norm[i, "R2"] <- norm_knn_class$R2Pred
-  fit_stats_norm[i, "MAE"] <- (ufo$month - norm_knn_class$pred) |> abs() |> mean()
-}
-
-#plotting normalized kNN fit stats
-fit_stats_norm |> 
-  pivot_longer(
-    cols = R2:MAE,
-    names_to = "fit_stat",
-    values_to = "fit"
-  ) |> 
-  
-  ggplot(mapping = aes(x = k,
-                       y = fit,
-                       color = fit_stat)) + 
-  geom_line(show.legend = F) + 
-  facet_wrap(facets = ~ fit_stat,
-             scales = "free_y",
-             ncol = 1)+
-  labs(title = "Fit Statistics for Normalized data")
-
-
-# kNN standardizing
-
-#creating data frame for standardized stats
-fit_stats_stan <- 
-  data.frame(k = k,
-         R2 = rep(-1, length(k)),
-         MAE = rep(-1, length(k)))
-#making kNN loop
-for (i in 1:length(k)) {
-  stan_knn_class <- 
-    knn(
-      train = ufo_stan,
-      y = ufo$month,
-      k = k[i]
-    )
-  
-  fit_stats_stan[i, "R2"] <- stan_knn_class$R2Pred
-  fit_stats_stan[i, "MAE"] <- (ufo$month - stan_knn_class$pred) |> abs() |> mean()
-}
-
-
-#plotting standarsized kNN fit stats
-fit_stats_stan |> 
-  pivot_longer(
-    cols = R2:MAE,
-    names_to = "fit_stat",
-    values_to = "fit"
-  ) |> 
-  
-  ggplot(mapping = aes(x = k,
-                       y = fit,
-                       color = fit_stat)) + 
-  geom_line(show.legend = F) + 
-  facet_wrap(facets = ~ fit_stat,
-             scales = "free_y",
-             ncol = 1)+
-  labs(title = "Fit Statistics for Standardized data")
-
-#combining for comparison
-fit_stats_combined <- 
-  bind_rows("stan" = fit_stats_stan,
-            "norm" = fit_stats_norm,
-            .id = "rescale")
-
-#finding best k value
-fit_stats_combined |>
-  filter(
-    R2 == max(R2) | MAE == min(MAE)
-    )
-
-
-#the running kNN with best k value and rescale method
-norm_knn <-
-  knn.reg(
-    train = ufo_norm,
-    y = ufo$seconds,
-    k = 1
-  )
-
-```
-``` {r making the kNN classification}
-
-
-# make the kNN classification tree
-knn_classification <- 
+#creating kNN classification with normalized data
+knn_norm_class <- 
   knn(
     train = ufo_norm |> select(latitude:longitude),
     test = ufo_norm |> select(latitude:longitude),
     cl = ufo$month,
-    k = 12
+    k = 1
+  )
+#creating kNN classification with standardized data
+knn_stan_class <- 
+  knn(
+    train = ufo_stan |> select(latitude:longitude),
+    test = ufo_stan |> select(latitude:longitude),
+    cl = ufo$month,
+    k = 1
   )
 
-# create confusion matrix for the classification
+#combinging to get best k value
+knn_acc <-
+  tibble(k = 1:10,
+         norm_acc = rep(-1, length(k)),
+         stan_acc = rep (-1, length(k)))
+
+#running through best k values 
+for ( i in 1:nrow(knn_acc)){
+  knn_norm <- 
+    knn.cv(train = ufo_norm,
+           cl = ufo$month,
+           k = knn_acc[i , 1])
+ knn_acc[i , "norm_acc"] <- mean(knn_norm == ufo$month)
+ knn_stan <- 
+    knn.cv(train = ufo_stan,
+           cl = ufo$month,
+           k = knn_acc[i , 1])
+ knn_acc[i , "stan_acc"] <- mean(knn_stan == ufo$month)
+}
+
+#graphing results of loop 
+knn_acc |>
+  pivot_longer(
+    cols = norm_acc:stan_acc,
+    names_to = "rescale",
+    values_to = "accuracy"
+  )|>
+  mutate(rescale = str_remove_all(rescale, "_acc"))|>
+  ggplot(mapping = aes( x = k,
+                        y = accuracy,
+                        color = rescale))+
+  geom_line() + 
+  scale_y_continuous(labels = scales::label_percent())
+
+#searching for best k values
+knn_acc |>
+  pivot_longer(cols = -k,
+               names_to = "rescale_method",
+               values_to = "accuracy")|>
+  slice_max(accuracy)
+
+#creating confusion matrix for the kNN classification
 table(actual = ufo$month,
       predicted = knn_classification)|>
   confusionMatrix(positive = "F")
-
 
 ```
 
