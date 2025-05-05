@@ -8,6 +8,8 @@ output:
   pdf_document: default
 ---
 
+## Setup
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 pacman::p_load(gapminder, socviz, tidyverse, grid, ggthemes,
@@ -15,7 +17,8 @@ pacman::p_load(gapminder, socviz, tidyverse, grid, ggthemes,
 theme_bw()
 ```
 
-## Introduction
+---
+
 
 ## Cleaning the data
 
@@ -40,9 +43,12 @@ ufo_raw$datetime <- ymd_hms(ufo_raw$datetime)
 
 #cleaning data
 ufo_raw|>
+  # keep duration in seconds form only
    mutate(seconds = duration..seconds.,
-          year = year(datetime), #create year column
-          month = month.name[month(datetime)])|> #create month column and convert to name  
+          # split datetime data into a year and a month column
+          year = year(datetime),
+          month = month.name[month(datetime)])|>
+  # select relevant columns
   select(datetime, city, state, country, seconds,latitude,longitude, year, month)|>
     filter(seconds <= 40000) |> 
     # filter out badly formatted entries that could cause NA's during the following conversion
@@ -53,16 +59,21 @@ ufo_raw|>
 ufo$latitude <- as.numeric(ufo$latitude) #changing lat to numeric
 ufo$seconds <- as.numeric(ufo$seconds) #changing seconds to numeric
 
+# drop any remaining NA entries
 ufo <- ufo |> drop_na(longitude, latitude, seconds)
 
 ```
 
-## Data Summary 
+---
+
+
+# Data Summary
 
 The first question we wanted to answer is where do most UFO sightings occur. 
 
-We created graphs of sighingts based on longitude and latitudue 
+We created histograms of sightings based on longitude and latitude.
 ```{r pressure, longitude & latitude }
+# histogram for longitude
 long_hist <- ggplot(
   data = ufo,
   mapping = aes( x= longitude
@@ -79,6 +90,8 @@ long_hist <- ggplot(
   scale_x_continuous(breaks = seq(-200, 200, 20))+
   scale_y_continuous(expand = c(0, 0, 0.05, 0))
 
+
+# histogram for latitude
 lat_hist <- ggplot(
   data = ufo,
   mapping = aes( x= latitude
@@ -99,14 +112,10 @@ long_hist
 lat_hist
 ```
 
-
-
-
-
 ---
 
 
-## Scatter plot of sighting locations 
+Next, we overlayed the coordinates of the sightings on a map of the world to better visualize.
 ```{r , map }
 map <- map_data("world")
 
@@ -135,7 +144,7 @@ map_plot
 ### Observations
 From the histograms, we noticed that most ufo sightings are concentrated around -120 through -70 longitude and 30 through 50 latitudes. When longitude and latitude are graphed against each other and over layed with a map of the word we can see that these values correspond with a high volume of sightings in the United States. This graph also indicates other potential hot spots of sightings, specifically Europe and the eastern coast of Australia. 
 
-
+---
 
 
 ## Bar graph of sightings per year
@@ -151,6 +160,7 @@ ggplot( data = ufo,
   )+
 scale_y_continuous(expand = c(0, 0, 0.05, 0))
 ```
+
 ### Observations
 UFO sightings were relatively infrequent in the early 1900's. Sightings gradually started to increase during the 1950's and then there was a sharp increase at the end of the 1990's and into the 2000's. 
 
@@ -166,6 +176,7 @@ summary <- ufo |> filter(year >= 2000) |> group_by(year, month) |> summarise(cou
 summary$month <- factor(summary$month, levels = month.name)
 summary <- summary |> arrange(year, month)
 
+# create small multiples graph
 ggplot(data = summary,
        mapping = aes(x = month,
                      y = count,
@@ -181,6 +192,9 @@ ggplot(data = summary,
 ### Observations
 When we compare how sightings per month has changed over time we see that generally the amount of sighitngs has increased. Before 2009 sightinga are generally conisistent over the year. In 2009 we can see the first real peak during the summer. This trend seems to be reflected in the following years since then. 
 
+---
+
+
 #Machine Learning
 
 We want to conduct linear regression to determine the effect that longitude and latitude have on the durration of sighitngs. Before we create a model we will check for 
@@ -190,6 +204,7 @@ We want to conduct linear regression to determine the effect that longitude and 
 
 ## Setting up linear regression models
 ```{r,  models}
+# create several models to explain seconds in terms of latitude and/or longitude
 lat_lm<- lm(
   formula = seconds ~ latitude,
   data = ufo 
@@ -205,6 +220,7 @@ lat_long_lm<- lm(
   data = ufo 
 )
 
+# create table to compare performance of the different models
 bind_rows(
   glance(lat_lm),
   glance(long_lm),
@@ -220,8 +236,13 @@ select(explanatories, r.squared, adj.r.squared, sigma)
 
 
 ```
+
+---
+
+
 ## Residual Plots for Duration of Sightings vs Longitude and Lattitude
 ```{r, residual plots}
+# define function to show a residual plot of a specified regression model
 resid_plot_print <- function(model, title) {
   augment_columns(
   x = model, 
@@ -255,10 +276,7 @@ resid_plot_print(lat_long_lm, "Longitude and Latitude" )
 
 ```
 
-
-
 ### Observations
-
 
 ---
 
@@ -266,6 +284,7 @@ resid_plot_print(lat_long_lm, "Longitude and Latitude" )
 ## Setting up kNN regression- Finding the best k
 
 ``` {r finding the best k}
+# normalize and standardizing the data
 normalize <- function(x) {
   return((x - min(x)) / (max(x) - min(x)))
 }
@@ -276,7 +295,7 @@ standardize <- function(x) {
 
 ufo_norm <- 
   ufo |> 
-  select(longitude, latitude, seconds) |> 
+  select(longitude, latitude, month) |> 
   mutate(
     across(
       .cols = latitude:longitude,
@@ -286,7 +305,7 @@ ufo_norm <-
 
 ufo_stan <- 
   ufo |> 
-  select(longitude, latitude, seconds) |> 
+  select(longitude, latitude, month) |> 
   mutate(
     across(
       .cols = latitude:longitude,
@@ -295,8 +314,8 @@ ufo_stan <-
   )
 
 
-k <- 1:10
-
+# cycling through options for best k and better method of normalizing or standardizing 
+k <- 1:20
 
 # try with normalizing
 fit_stats_norm <- 
@@ -308,12 +327,12 @@ for (i in 1:length(k)) {
   norm_knn <- 
     knn.reg(
       train = ufo_norm,
-      y = ufo$seconds,
+      y = ufo$month,
       k = k[i]
     )
   
   fit_stats_norm[i, "R2"] <- norm_knn$R2Pred
-  fit_stats_norm[i, "MAE"] <- (ufo$seconds - norm_knn$pred) |> abs() |> mean()
+  fit_stats_norm[i, "MAE"] <- (ufo$month - norm_knn$pred) |> abs() |> mean()
 }
 
 fit_stats_norm
@@ -344,12 +363,12 @@ for (i in 1:length(k)) {
   stan_knn <- 
     knn.reg(
       train = ufo_stan,
-      y = ufo$seconds,
+      y = ufo$month,
       k = k[i]
     )
   
   fit_stats_stan[i, "R2"] <- stan_knn$R2Pred
-  fit_stats_stan[i, "MAE"] <- (ufo$seconds - stan_knn$pred) |> abs() |> mean()
+  fit_stats_stan[i, "MAE"] <- (ufo$month - stan_knn$pred) |> abs() |> mean()
 }
 
 fit_stats_stan
@@ -369,6 +388,8 @@ fit_stats_stan |>
              scales = "free_y",
              ncol = 1)
 
+
+# show a table of results
 fit_stats_combined <- 
   bind_rows("stan" = fit_stats_stan,
             "norm" = fit_stats_norm,
@@ -383,7 +404,7 @@ fit_stats_combined |>
 norm_knn <-
   knn.reg(
     train = ufo_norm,
-    y = ufo$seconds,
+    y = ufo$month,
     k = 1
   )
 
@@ -397,6 +418,7 @@ norm_knn <-
 
 ## Making the kNN classification
 ``` {r making the kNN classification}
+# make the classification
 knn_classification <- 
   knn(
     train = ufo_norm |> select(latitude:longitude),
@@ -405,6 +427,7 @@ knn_classification <-
     k = 12
   )
 
+# show a table of the classification
 table(actual = ufo$month,
       predicted = knn_classification)|>
   confusionMatrix(positive = "F")
@@ -413,8 +436,6 @@ table(actual = ufo$month,
 ```
 
 ``` {r classification tree}
-
-
 # Build the full decision tree here
 tree_full<-
   rpart(
