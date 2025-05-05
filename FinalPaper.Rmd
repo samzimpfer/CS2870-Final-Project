@@ -392,7 +392,7 @@ knn_norm_class <-
     train = ufo_norm |> select(latitude:longitude),
     test = ufo_norm |> select(latitude:longitude),
     cl = ufo$month,
-    k = 12
+    k = 1
   )
 
 knn_stan_class <- 
@@ -400,11 +400,11 @@ knn_stan_class <-
     train = ufo_stan |> select(latitude:longitude),
     test = ufo_stan |> select(latitude:longitude),
     cl = ufo$month,
-    k = 12
+    k = 1
   )
 
 knn_acc <-
-  tibble(k = 1:20,
+  tibble(k = 1:10,
          norm_acc = rep(-1, length(k)),
          stan_acc = rep (-1, length(k)))
 
@@ -420,6 +420,19 @@ for ( i in 1:nrow(knn_acc)){
            k = knn_acc[i , 1])
  knn_acc[i , "stan_acc"] <- mean(knn_stan == ufo$month)
 }
+
+knn_acc |>
+  pivot_longer(
+    cols = norm_acc:stan_acc,
+    names_to = "rescale",
+    values_to = "accuracy"
+  )|>
+  mutate(rescale = str_remove_all(rescale, "_acc"))|>
+  ggplot(mapping = aes( x = k,
+                        y = accuracy,
+                        color = rescale))+
+  geom_line() + 
+  scale_y_continuous(labels = scales::label_percent())
 
 table(actual = ufo$month,
       predicted = knn_classification)|>
