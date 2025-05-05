@@ -247,7 +247,7 @@ select(explanatories, r.squared, adj.r.squared, sigma)
 ```
 ## Residual Plots for Duration of Sightings vs Longitude and Lattitude
 ```{r, residual plots}
-resid_plot_print <- function(model) {
+resid_plot_print <- function(model, title) {
   augment_columns(
   x = model, 
   data = ufo
@@ -269,14 +269,14 @@ resid_plot_print <- function(model) {
   ) + 
   
   labs(
-    x = paste("Predicted Values"),
+    x = "Predicted Values",
     y = "Residuals",
-    title = paste("Residual plot for" , model 
-  )}
+    title = paste("Residual Plot for" , title , "Model"
+  )) }
 
-resid_plot_print(lat_lm)
-resid_plot_print(long_lm)
-resid_plot_print(lat_long_lm)
+resid_plot_print(lat_lm, "Latitude")
+resid_plot_print(long_lm, "Longitude" )
+resid_plot_print(lat_long_lm, "Longitude and Latitude" )
 
 ```
 

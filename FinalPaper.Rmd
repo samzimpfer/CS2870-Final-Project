@@ -94,7 +94,7 @@ lat_hist
 In the latitude histogram, we see than sightings are most prevalent around 40. Again, this corresponds to the coordinates of the US and also Europe, which is the second most frequently reported area of UFO sightings. This data supports the same conclusions we see from the longitude histogram.
 
 
-```{r , map }
+```{r , echo=FALSE,  map }
 map <- map_data("world")
 
 map_plot <- ggplot()+
@@ -123,7 +123,7 @@ Here, we can see in greater detail the geographical dispersion of the sightings.
 
 The next question we had was how the number of sightings had increase or decreased over the full epoch of time that the data set spans. We created a histogram of sightings per group of 5 years to answer this question. 
 
-```{r, bar graph of sightings per year}
+```{r , echo=FALSE,  bargraph }
 ggplot( data = ufo,
         mapping = aes(x = year))+
   geom_histogram(fill = "hotpink",
@@ -138,7 +138,7 @@ scale_y_continuous(expand = c(0, 0, 0.05, 0))
 The histogram shows that UFO sightings were relatively infrequent in the early 1900's. Sightings gradually started to increase during the 1950's and then there was a sharp increase at the end of the 1990's and into the 2000's. The number of sightings seems to start to plateau past 2005 also, so it would interesting to see whether the data plateaus in the long term after this point or if it would continue to increase beyond a certain point. This pattern might indicate developments in human history that could be of interest to extraterrestrial beings or have sparked human interest in the existance of extraterrestrials.
 
 
-```{r, small multiples}
+```{r , echo=FALSE,  smallmultiples }
 # create table of year, month, number of sightings
 summary <- ufo |> filter(year >= 2000) |> group_by(year, month) |> summarise(count = n())
 
@@ -167,7 +167,7 @@ Here we have a small multiples graph which shows the seasonal trends in UFO data
 We wanted to use machine learning techniques to predict the duration of sightings and the longitude/latitude they took place at. We first chose to try to create a linear regression model. We thought this would be appropriate as we wanted to explore how our explanatory variables could explain the duration of sightings which is a numerical response variable. We also thought this would be a good technique to use as it is an eager learner and we wanted to create a model.
 
 
-```{r,  models}
+```{r , echo=FALSE,  linreg }
 lat_lm<- lm(
   formula = seconds ~ latitude,
   data = ufo 
@@ -200,7 +200,7 @@ select(explanatories, r.squared, adj.r.squared, sigma)
 ```
 
 #### Residual Plots for Duration of Sightings vs Longitude and Lattitude
-```{r, residual plots}
+```{r , echo=FALSE,  resid }
 resid_plot_print <- function(model, title) {
   augment_columns(
   x = model, 
@@ -239,9 +239,9 @@ We created three different linear regression models, one with longitude as the e
 We then made residual graphs to see what else we could notice about our models and the data. These plots also indicate that the linear model is not a good predictor of duration based on longitude or latitude. In each plot there are clusters of outliers that are significantly higher than the majority of the data. 
 
 ### kNN regression 
+Since our linear regression proved to not be effective in predicting duration of sightings based on longitude or latitude we decided to try a k Nearest Neighbors regression. We noticed that a large portion of the data was acting differently than the rest, and thought kNN regression could account for this. 
 
-
-``` {r kNN regression}
+``` {r , echo=FALSE,  kNNreg }
 normalize <- function(x) {
   return((x - min(x)) / (max(x) - min(x)))
 }
@@ -276,7 +276,7 @@ k <- 1:10
 
 # try with normalizing
 fit_stats_norm <- 
-  tibble(k = k,
+  data.frame(k = k,
          R2 = rep(-1, length(k)),
          MAE = rep(-1, length(k)))
 
@@ -292,7 +292,6 @@ for (i in 1:length(k)) {
   fit_stats_norm[i, "MAE"] <- (ufo$seconds - norm_knn$pred) |> abs() |> mean()
 }
 
-fit_stats_norm
 
 fit_stats_norm |> 
   pivot_longer(
@@ -307,12 +306,13 @@ fit_stats_norm |>
   geom_line(show.legend = F) + 
   facet_wrap(facets = ~ fit_stat,
              scales = "free_y",
-             ncol = 1)
+             ncol = 1)+
+  labs(title = "Fit Statistics for Normalized data")
 
 
 # try with standardizing
 fit_stats_stan <- 
-  tibble(k = k,
+  data.frame(k = k,
          R2 = rep(-1, length(k)),
          MAE = rep(-1, length(k)))
 
@@ -328,7 +328,7 @@ for (i in 1:length(k)) {
   fit_stats_stan[i, "MAE"] <- (ufo$seconds - stan_knn$pred) |> abs() |> mean()
 }
 
-fit_stats_stan
+
 
 fit_stats_stan |> 
   pivot_longer(
@@ -343,18 +343,21 @@ fit_stats_stan |>
   geom_line(show.legend = F) + 
   facet_wrap(facets = ~ fit_stat,
              scales = "free_y",
-             ncol = 1)
+             ncol = 1)+
+  labs(title = "Fit Statistics for Standardized data")
 
 fit_stats_combined <- 
   bind_rows("stan" = fit_stats_stan,
             "norm" = fit_stats_norm,
-            .id = "rescale") 
+            .id = "rescale")
 
 fit_stats_combined |>
   filter(
     R2 == max(R2) | MAE == min(MAE)
     
   )
+
+
 
 norm_knn <-
   knn.reg(
@@ -364,5 +367,9 @@ norm_knn <-
   )
 
 ```
-The fifth table show that the best k value to use is 1, which is typically not a value that produces accurate regression models. Because of this, we see that kNN regression is also not a viable method of machine learning.
+When looking at the fit statistic plots for both the normalized and standardized we can see the R-squared values are at their max and the MAE is minimized at values close to one. We then searched the data to find the best k value, which ended up being a k value of one when using the normalized data. This k value is unusual and leads up to believe that this model is likely overfit to the data that we used to train it. \
+
+Both the linear regression and kNN regression failed to be good techniques for the effect of longitude and latitude on duration. This could be due to a lack of relationship between these variables. There is a large portion of the data where the sightings have a very short duration. There is also a second portion of the data that has much longer duration. 
+
+
 
