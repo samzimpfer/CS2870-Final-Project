@@ -162,7 +162,10 @@ Here we have a small multiples graph which shows the seasonal trends in UFO data
 
 ## Machine learning
 
-Our original goal was to use machine learning techniques to identify a relationship between the duration of sightings and the longitude/latitude the sightings took place at. We used both linear and kNN regression techniques to model this relationship, but after some trial and error it became apparent that the data points are spread in too random of a way to be modeled in any significant way by regression techniques. To see the absence of a linear relationship, we will take a look at the graphs produced below, and the code used to produce them. These graphs use a linear model based on only latitude, only longitude, and latitude plus longitude respectively.
+###Linear Regression
+
+We wanted to use machine learning techniques to predict the duration of sightings and the longitude/latitude they took place at. We first chose to try to create a linear regression model. We thought this would be appropriate as we wanted to explore how our explanatory variables could explain the duration of sightings which is a numerical response variable. We also thought this would be a good technique to use as it is an eager learner and we wanted to create a model.
+
 
 ```{r,  models}
 lat_lm<- lm(
@@ -196,9 +199,9 @@ select(explanatories, r.squared, adj.r.squared, sigma)
 
 ```
 
-## Residual Plots for Duration of Sightings vs Longitude and Lattitude
+#### Residual Plots for Duration of Sightings vs Longitude and Lattitude
 ```{r, residual plots}
-resid_plot_print <- function(model) {
+resid_plot_print <- function(model, title) {
   augment_columns(
   x = model, 
   data = ufo
@@ -220,19 +223,25 @@ resid_plot_print <- function(model) {
   ) + 
   
   labs(
-    x = "Predicted",
-    y = "Residuals"
-  )}
+    x = "Predicted Values",
+    y = "Residuals",
+    title = paste("Residual Plot for" , title , "Model"
+  )) }
 
-resid_plot_print(lat_lm)
-resid_plot_print(long_lm)
-resid_plot_print(lat_long_lm)
+resid_plot_print(lat_lm, "Latitude")
+resid_plot_print(long_lm, "Longitude" )
+resid_plot_print(lat_long_lm, "Longitude and Latitude" )
 
 ```
 
-In each graph, the mean of the residuals is very low, which is good because it means the average error in predictions is low, but there is a cluster of outlines in each graph that are severely under predicted. These clusters show that the data simply cannot be modeled linearly. To try and work around this, we attempted to use kNN regression instead. The process of identifying the best k value and normalization/standardization technique is shown below.
+We created three different linear regression models, one with longitude as the explanatory variable, one with latitude as the explanatory variable, adn the third with both. We wanted to compare which model would be the most accurate. From the table above we can see that all three models had R-squared values that were very close to zero. This indicates that our models were not a good predictor of duration of UFO sightings. \
 
-``` {r finding the best k}
+We then made residual graphs to see what else we could notice about our models and the data. These plots also indicate that the linear model is not a good predictor of duration based on longitude or latitude. In each plot there are clusters of outliers that are significantly higher than the majority of the data. 
+
+### kNN regression 
+
+
+``` {r kNN regression}
 normalize <- function(x) {
   return((x - min(x)) / (max(x) - min(x)))
 }
