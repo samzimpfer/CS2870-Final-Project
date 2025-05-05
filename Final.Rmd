@@ -419,15 +419,77 @@ norm_knn <-
 ---
 
 
-## Making the kNN regression
-``` {r making the regression tree}
+## Making the kNN classification
+``` {r making the kNN classification}
+knn_classification <- 
+  knn(
+    train = ufo_norm |> select(latitude:longitude),
+    test = ufo_norm |> select(latitude:longitude),
+    cl = ufo$month,
+    k = 12
+  )
+
+table(actual = ufo$month,
+      predicted = knn_classification)|>
+  confusionMatrix(positive = "F")
+
 
 ```
+``` {r classification tree}
 
-``` {r regression tree cont.}
 
+# Build the full decision tree here
+tree_full<-
+  rpart(
+    formula = month ~ longitude + latitude,
+    data = ufo,
+    method = "class",
+    parms = list(split = "information"),
+    minsplit = 2,
+    minbucket = 1,
+    cp = -1
+  )
+
+#finding xerror cut off
+tree_full$cptable |>
+  data.frame()|>
+  slice_min(xerror, n = 1)|> #finding row with smallest xerror
+  mutate(xcutoff = xerror + xstd) |>#calculate cut off value
+  pull(xcutoff) ->xcutoff
+  
+
+#use xcutoff to find corresponding cp value 
+tree_full$cptable|>
+  data.frame()|>
+  filter(xerror < xcutoff)|> #keeping rows with x error less than x cut off
+  slice(1)|>
+  pull(CP) -> cp_cutoff
+
+
+c("xerror cutoff"= xcutoff,
+  "cp prune value" = cp_cutoff)
+
+# Prune the tree
+prune(tree = tree_full,
+      cp = cp_cutoff) -> pruned_tree
+
+# Then plot it:
+rpart.plot(
+  x = pruned_tree,
+  type = 5,
+  extra = 102
+)
+
+rpart.rules(
+  x=pruned_tree,
+  extra = 4
+)
+
+varImp(object = pruned_tree)
+
+summary(object = pruned_tree,
+        digits = 3)
 ```
+
 
 ### Observations
-* Using kNN regression proved to be 75.02% accurate in predicting the duration of sighting based on longitude and latitude.
-* Based on an R^2 value of 0.7502
