@@ -10,7 +10,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
  pacman::p_load(gapminder, socviz, tidyverse, grid, ggthemes,
-               usmap, maps, statebins, viridis, leaflet, lubridate, broom, GGally, rpart, rpart.plot, FNN) 
+               usmap, maps, statebins, viridis, leaflet, lubridate, broom, GGally, rpart, rpart.plot, FNN, class, caret) 
 ```
 
 ## Introduction
@@ -369,7 +369,82 @@ norm_knn <-
 ```
 When looking at the fit statistic plots for both the normalized and standardized we can see the R-squared values are at their max and the MAE is minimized at values close to one. We then searched the data to find the best k value, which ended up being a k value of one when using the normalized data. This k value is unusual and leads up to believe that this model is likely overfit to the data that we used to train it. \
 
-Both the linear regression and kNN regression failed to be good techniques for the effect of longitude and latitude on duration. This could be due to a lack of relationship between these variables. There is a large portion of the data where the sightings have a very short duration. There is also a second portion of the data that has much longer duration. Additionally, the many sightings are concentrated in the United States and Europe. These nuances of the data could have influienced their behaviors with regression. 
+Both the linear regression and kNN regression failed to be good techniques for the effect of longitude and latitude on duration. This could be due to a lack of relationship between these variables. There is a large portion of the data where the sightings have a very short duration. There is also a second portion of the data that has much longer duration. Additionally, the many sightings are concentrated in the United States and Europe. These nuances of the data could have influenced their behaviors with regression. 
+
+### kNN Classifications
+
+We were also interested in using machine learning to see if we could use latitude and longitude to predict which month a sighting happened in. We started by using kNN classification because our response variable is categorical and we thought it would be an effective method of predicting month based on longitude and latitude.
+
+``` {r , echo=FALSE,  kNNclass }
+knn_classification <- 
+  knn(
+    train = ufo_norm |> select(latitude:longitude),
+    test = ufo_norm |> select(latitude:longitude),
+    cl = ufo$month,
+    k = 12
+  )
+
+table(actual = ufo$month,
+      predicted = knn_classification)|>
+  confusionMatrix(positive = "F")
 
 
+```
+From the confusion matrix displayed above we see that the accuracy of this model is 22.5 %. While this is a relatively low accuracy it is still a 2.1% higher accuracy rate than if predictions were made based on no information. The matrix also shows that this difference is statisitcally signficant, with a p value of  2.2e-16. So while the model isn't super accurate its still better than if there was no information to base preditions on. 
+
+###  Classification Tree
+
+The accuracy of our kNN classification was relatively low so we decided to make a classification tree to make a model of longitude, latitude, and the month of a sighting. We thought this may work better as it is a very large data set and classification trees are able to run quicker. Additonally it would provide a visualization and steps to take when determining the month of a sighting. 
+``` {r , echo=FALSE,  Classtree}
+
+
+# Build the full decision tree here
+tree_full<-
+  rpart(
+    formula = month ~ longitude + latitude,
+    data = ufo,
+    method = "class",
+    parms = list(split = "information"),
+    minsplit = 2,
+    minbucket = 1,
+    cp = -1
+  )
+
+#finding xerror cut off
+tree_full$cptable |>
+  data.frame()|>
+  slice_min(xerror, n = 1)|> #finding row with smallest xerror
+  mutate(xcutoff = xerror + xstd) |>#calculate cut off value
+  pull(xcutoff) ->xcutoff
+  
+
+#use xcutoff to find corresponding cp value 
+tree_full$cptable|>
+  data.frame()|>
+  filter(xerror < xcutoff)|> #keeping rows with x error less than x cut off
+  slice(1)|>
+  pull(CP) -> cp_cutoff
+
+# Prune the tree
+prune(tree = tree_full,
+      cp = cp_cutoff) -> pruned_tree
+
+# Then plot it:
+rpart.plot(
+  x = pruned_tree,
+  type = 5,
+  extra = 102
+)
+
+rpart.rules(
+  x=pruned_tree,
+  extra = 4
+)
+
+pruned_tree$cptabl
+
+varImp(object = pruned_tree)
+
+```
+The pruned classification tree is displayed above. This tree has a total of 24 nodes. When we look at the CP table for the pruned tree we can see that the xerror 
 
