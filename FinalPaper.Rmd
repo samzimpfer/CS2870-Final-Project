@@ -8,7 +8,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F, fig.align = 'center')
  pacman::p_load(gapminder, socviz, tidyverse, grid, ggthemes,
                usmap, maps, statebins, viridis, leaflet, lubridate, broom, GGally, rpart, rpart.plot, FNN, class, caret) 
 ```
@@ -172,7 +172,7 @@ Here we have a small multiples graph which shows the seasonal trends in UFO data
 
 ## Machine learning
 
-###Linear Regression
+### Linear Regression
 
 We wanted to use machine learning techniques to predict the duration of sightings and the longitude/latitude they took place at. We first chose to try to create a linear regression model. We thought this would be appropriate as we wanted to explore how our explanatory variables could explain the duration of sightings which is a numerical response variable. We also thought this would be a good technique to use as it is an eager learner and we wanted to create a model.
 
@@ -210,6 +210,7 @@ select(explanatories, r.squared, adj.r.squared, sigma)
 ```
 
 #### Residual Plots for Duration of Sightings vs Longitude and Lattitude
+
 ```{r , echo=FALSE,  resid }
 resid_plot_print <- function(model, title) {
   augment_columns(
@@ -238,12 +239,14 @@ resid_plot_print <- function(model, title) {
     title = paste("Residual Plot for" , title , "Model"
   )) }
 
+
+```
+```{r , echo=FALSE,  plots }
 resid_plot_print(lat_lm, "Latitude")
 
 resid_plot_print(long_lm, "Longitude" )
 
 resid_plot_print(lat_long_lm, "Longitude and Latitude" )
-
 ```
 
 We created three different linear regression models, one with longitude as the explanatory variable, one with latitude as the explanatory variable, and the third with both. We wanted to compare which model would be the most accurate. From the table above we can see that all three models had R-squared values that were very close to zero. This indicates that our models were not a good predictor of duration of UFO sightings. \
@@ -443,7 +446,7 @@ knn_acc |>
   slice_max(accuracy)
 
 table(actual = ufo$month,
-      predicted = knn_classification)|>
+      predicted = knn_stan)|>
   confusionMatrix(positive = "F")
 
 
