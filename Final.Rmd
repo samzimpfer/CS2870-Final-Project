@@ -22,7 +22,7 @@ theme_bw()
 
 ## Cleaning the data
 
-The variables used are:
+The variables used are:\
 **datetime**: the date and time of sighting in year, month, day, hours, minutes, seconds format. \
 **city**: city where sighitng occurred \
 **state**: state where sighting occurred \
@@ -67,9 +67,7 @@ ufo <- ufo |> drop_na(longitude, latitude, seconds)
 
 # Data Summary
 
-The first question we wanted to answer is where do most UFO sightings occur. 
-
-We created histograms of sightings based on longitude and latitude.
+## Graphing longitude and latitude
 ```{r pressure, longitude & latitude }
 # histogram for longitude
 long_hist <- ggplot(
@@ -81,7 +79,7 @@ long_hist <- ggplot(
                  color = "black", 
                  bins = 40)+
   labs(
-    title = "Number of sightings per longitude",
+    title = "Number of sightings by longitude",
     x = "Longitude",
     y = "Number of Sightings"
   )+
@@ -99,7 +97,7 @@ lat_hist <- ggplot(
                  color = "black",
                  bins = 40)+
   labs(
-    title = "Number of sightings per lattitude",
+    title = "Number of sightings by lattitude",
     x = "Latitude",
     y = "Number of Sightings"
   )+
@@ -114,7 +112,6 @@ lat_hist
 ---
 
 
-Next, we overlayed the coordinates of the sightings on a map of the world to better visualize.
 ```{r , map }
 #createing scatter plot ontop of world map
 map <- map_data("world")
@@ -194,7 +191,7 @@ months_by_year
 
 
 
-#Machine Learning
+# Machine Learning
 
 ## Setting up linear regression models
 ```{r,  models}
@@ -234,7 +231,7 @@ select(explanatories, r.squared, adj.r.squared, sigma)
 ---
 
 
-## Residual Plots for Duration of Sightings vs Longitude and Lattitude
+## Residual Plots for linear regressions
 ```{r, residual plots}
 # define function to show a residual plot of a specified regression model
 resid_plot_print <- function(model, title) {
@@ -412,7 +409,7 @@ norm_knn <-
 ```
 
 
-## Making the kNN classification
+## kNN classification
 ``` {r ,  kNNclass }
 
 #creating kNN classification with normalized data
@@ -475,10 +472,12 @@ knn_acc |>
 
 #creating confusion matrix for the kNN classification
 table(actual = ufo$month,
-      predicted = knn_classification)|>
+      predicted = knn_stan_class)|>
   confusionMatrix(positive = "F")
 
 ```
+
+## Classification Tree
 
 ``` {r classification tree}
 # creating full classification tree

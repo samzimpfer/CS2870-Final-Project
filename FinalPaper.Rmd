@@ -14,9 +14,9 @@ knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 ```
 
 ## Introduction
-  The data we were working with came from a data set called "UFO sightings scrubbed" that was found on Kaggle.com from a user named Akhil Goyal. The data was last updated three months ago, making it quite recent data. It contains information on all UFO sightings dating back to 1906. The data could have some bias if ufo sightings from certain regions of the world were not recorded or included in this data set, additionally it is observational data collected by different people around the globe which can create large amounts of variation in the data. \
-  This data is of interest because UFOs have been a topic of public debate for years. With increasing amounts of interest in space travel and extraterrestrials in more recent years, the fascinations with UFOs has only grown stronger. For this project we want to explore what influences sightings as this can be valuable knowledge for those trying to investigate UFOs. \
-  In order to work with our data we had to clean it. This included converting the datetime column into year, month, day, seconds, minutes, hours format. Then we created a new data set where we added columns for years, seconds, and months and kept the updated datetime, city, state, country, longitude, and latitude columns. We then had to convert both longitude and latitude into numeric values in order to work with them. The variables we used and code for this data cleaning follows: \
+  The data we were working with came from a data set called "UFO sightings scrubbed" that was found on Kaggle.com from a user named Akhil Goyal. The data was last updated three months ago but only contains data from 1906 till 2014. The data could have some bias if UFO sightings from certain regions of the world were not recorded or included in this data set, additionally it is observational data collected by different people around the globe which can create large amounts of variation. \
+  This data is of interest because UFOs have been a topic of public interest for years. With increasing amounts of interest in space travel and extraterrestrials in more recent years, the fascinations with UFOs has only grown stronger. For this project we want to explore what influences sightings as this can be valuable knowledge for those trying to investigate UFOs. \
+  In order to work with our data we had to clean it. This included converting the datetime column into year, month, day, seconds, minutes, hours format. Then we created a new data set where we added columns for years, seconds, and months and kept the updated datetime, city, state, country, longitude, and latitude columns. We then had to convert both longitude and latitude into numeric values in order to work with them. Additionally we had to remove some columns with improper formatting and we dropped any columns with NA's. The variables we used and code for this data cleaning follows: \
   
 **datetime**: the date and time of sighting in year, month, day, hours, minutes, seconds format. \
 **city**: city where sighitng occurred \
@@ -56,7 +56,7 @@ ufo <- ufo |> drop_na(longitude, latitude, seconds)
 
 ## Data Analysis 
 
-The first question we had about UFO sightings is how the location around the world influenced the number of UFO sightings that occurred. We began by creating histograms for longitude and latitude. From there we created a scatter plot to compare latitude and longitude to see if there was a relationship between the two of them. 
+The first question we had about UFO sightings is how the location around the world influenced the number that occurred. We began by creating histograms for longitude and latitude. From there we created a scatter plot to compare latitude and longitude to see if there was a relationship between the two of them. 
 
 ```{r, echo = FALSE}
 long_hist <- ggplot(
@@ -128,7 +128,7 @@ scale_y_continuous(expand = c(0, 0, 0.05, 0))+
 
 map_plot
 ```
-Here, we can see in greater detail the geographical dispersion of the sightings. The graph supports the same claims as the previous two graphs that there is a high volume of sightings in the United States. This graph also indicates other potential hot spots of sightings, specifically Europe and the eastern coast of Australia. The color coding makes it evident that most of the sightings are relatively short.
+Here, we can see in greater detail the geographical dispersion of the sightings. The graph supports the same claims as the previous two graphs that there is a high volume of sightings in the United States. This graph also indicates other potential hot spots of sightings, specifically Europe and the eastern coast of Australia. The color coding makes it evident that most of the sightings are relatively short.\
 
 
 The next question we had was how the number of sightings had increase or decreased over the full epoch of time that the data set spans. We created a histogram of sightings per group of 5 years to answer this question. 
@@ -239,14 +239,16 @@ resid_plot_print <- function(model, title) {
   )) }
 
 resid_plot_print(lat_lm, "Latitude")
+
 resid_plot_print(long_lm, "Longitude" )
+
 resid_plot_print(lat_long_lm, "Longitude and Latitude" )
 
 ```
 
-We created three different linear regression models, one with longitude as the explanatory variable, one with latitude as the explanatory variable, adn the third with both. We wanted to compare which model would be the most accurate. From the table above we can see that all three models had R-squared values that were very close to zero. This indicates that our models were not a good predictor of duration of UFO sightings. \
+We created three different linear regression models, one with longitude as the explanatory variable, one with latitude as the explanatory variable, and the third with both. We wanted to compare which model would be the most accurate. From the table above we can see that all three models had R-squared values that were very close to zero. This indicates that our models were not a good predictor of duration of UFO sightings. \
 
-We then made residual graphs to see what else we could notice about our models and the data. These plots also indicate that the linear model is not a good predictor of duration based on longitude or latitude. In each plot there are clusters of outliers that are significantly higher than the majority of the data. 
+We then made residual graphs to see what else we could notice about our models and the data. These plots also indicate that the linear model is not a good predictor of duration based on longitude or latitude. In each plot there are clusters of outliers that are significantly higher than the majority of the data so the residuals dont have an even spread. 
 
 ### kNN regression 
 Since our linear regression proved to not be effective in predicting duration of sightings based on longitude or latitude we decided to try a k Nearest Neighbors regression. We noticed that a large portion of the data was acting differently than the rest, and thought kNN regression could account for this. 
@@ -377,9 +379,9 @@ norm_knn <-
   )
 
 ```
-When looking at the fit statistic plots for both the normalized and standardized we can see the R-squared values are at their max and the MAE is minimized at values close to one. We then searched the data to find the best k value, which ended up being a k value of one when using the normalized data. This k value is unusual and leads up to believe that this model is likely overfit to the data that we used to train it. \
+When looking at the fit statistic plots for both the normalized and standardized data we can see the R-squared values are at their max and the MAE is minimized at values close to one. We then searched the data to find the best k value, which ended up being a k value of one when using the normalized data. This k value is unusual and leads up to believe that this model is likely overfit to the data that we used to train it. \
 
-Both the linear regression and kNN regression failed to be good techniques for the effect of longitude and latitude on duration. This could be due to a lack of relationship between these variables. There is a large portion of the data where the sightings have a very short duration. There is also a second portion of the data that has much longer duration. Additionally, the many sightings are concentrated in the United States and Europe. These nuances of the data could have influenced their behaviors with regression. 
+Both the linear regression and kNN regression failed to be good techniques for the effect of longitude and latitude on duration. This could be due to a lack of relationship between these variables. There is a large portion of the data where the sightings have a very short duration. There is also a second portion of the data that has much longer duration. Additionally, many sightings are concentrated in the United States and Europe. These nuances of the data could have influenced their behaviors with regression. 
 
 ### kNN Classifications
 
@@ -446,7 +448,7 @@ table(actual = ufo$month,
 
 
 ```
-From the confusion matrix displayed above we see that the accuracy of this model is 22.5 %. While this is a relatively low accuracy it is still a 2.1% higher accuracy rate than if predictions were made based on no information. The matrix also shows that this difference is statistically significant, with a p value of  2.2e-16. So while the model isn't super accurate its still better than if there was no information to base predictions on. 
+From the confusion matrix displayed above we see that the accuracy of this model is 42.78%. This is about 25% more accurate than predictions made based on no information. The matrix also shows that this difference is statistically significant, with a p value of  2.2e-16. One odd thing about the model is that a k value of 1 was chosen to be the best. This might indicate that the model is overfit to the data because its only relying on the most close neightbor. 
 
 ###  Classification Tree
 
@@ -496,11 +498,11 @@ rpart.plot(
 varImp(object = pruned_tree)
 
 ```
-The pruned classification tree is displayed above. This tree has a total of 24 leaves. The leaf that contains the most data is latitude greater than 39 and longitude less than -77. This node contains 33% of the data and classifies the month as July.  The fractions on each leaf correspond to how many that were classified into that leaf were classified correctly. Most of them have low rates of correct classification which is likely due to there being a low accuracy of the model as a whole. From the results of the variable importance test we can determine that latitude is a more important predictor of month than longitude is.
+The pruned classification tree is displayed above. This tree has a total of 24 leaves. The leaf that contains the most data is latitude greater than 39 and longitude less than -77. This node contains 33% of the data and classifies the month as July. The fractions on each leaf correspond to how many that were classified into that leaf were classified correctly. Most of them have low rates of correct classification which is likely due to there being a low accuracy of the model as a whole. From the results of the variable importance test we can determine that latitude is a more important predictor of month than longitude is.
 
 ##Conclusion
 
-Through our data analysis and machine learning we came to a few conclusions. The first is that the vast majority of UFO sightings occur in the United States with additional hot spots of sightings in places like Europe and the eastern coast of Australia. We also found that the increase in UFO sightings began around the 1950s followed by a drastic increase in the early 2000s. Another conclusion we came to was that since 2000, a peak in sightings during the months of June and July has developed. From our regression machine learning techniques we conclude that longitude and latitude were not good predictors for sighting durations and could not produce a good regression model. Finally, we learned that classification techniques result in low accuracy for predicting the month of sightings based on longitude and latitude. 
+Through our data analysis and machine learning we came to a few conclusions. The first is that the vast majority of UFO sightings occur in the United States with additional hot spots of sightings in places like Europe and the eastern coast of Australia. We also found that the increase in UFO sightings began around the 1950s followed by a drastic increase in the early 2000s. Another conclusion we came to was that since 2000, a peak in sightings during the months of June and July has developed. From our regression machine learning techniques we conclude that longitude and latitude were not good predictors for sighting duration and could not produce a good regression model. Finally, we learned that classification techniques result in low accuracy for predicting the month of sightings based on longitude and latitude, but they are better than no information. 
 
 ##Conclusion
-A major limitation of this project was the observational aspect of the data. This means our results are more varied and potentially less accurate than if there was a consistent method of recording sightings that could make this data more accurate. In the future other models could be made for the effect between longitude and latitude that had the ability to deal with the apparent gap between long and short duration sightings. Additionally, future research into the topic could collect more accurate data for how sightings change over the seasons or years by focusing in on a smaller range of the globe. Now that we have idenfitied the US and parts of Europe as hot spots, UFO data collection could be concentrated to these locations for the highest probability of collecting a lot of data. 
+A major limitation of this project was the observational aspect of the data. This means our results are more varied and potentially less accurate than if there was a consistent method of recording sightings that could make this data more accurate. In the future other models could be made for the effect between longitude and latitude that had the ability to deal with the apparent gap between long and short duration sightings. Additionally, future research into the topic could collect more accurate data for how sightings change over the seasons or years by focusing in on a smaller range of the globe. Now that we have identified the US and parts of Europe as hot spots, UFO data collection could be concentrated to these locations for the highest probability of collecting a lot of data. 
