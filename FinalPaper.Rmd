@@ -98,9 +98,7 @@ lat_hist <- ggplot(
   scale_x_continuous(breaks = seq(-100, 100, 20))+
   scale_y_continuous(expand = c(0, 0, 0.05, 0))
 
-#display both graphs
-long_hist
-lat_hist
+
 ```
 
 ```{r, echo = FALSE}
@@ -253,6 +251,7 @@ resid_plot_print <- function(model, title) {
 
 
 ```
+
 ```{r , echo=FALSE,  plots }
 resid_plot_print(lat_lm, "Latitude")
 
@@ -515,9 +514,9 @@ varImp(object = pruned_tree)
 ```
 The pruned classification tree is displayed above. This tree has a total of 24 leaves. The leaf that contains the most data is latitude greater than 39 and longitude less than -77. This node contains 33% of the data and classifies the month as July. The fractions on each leaf correspond to how many that were classified into that leaf were classified correctly. Most of them have low rates of correct classification which is likely due to there being a low accuracy of the model as a whole. From the results of the variable importance test we can determine that latitude is a more important predictor of month than longitude is.
 
-##Conclusion
+## Conclusion
 
 Through our data analysis and machine learning we came to a few conclusions. The first is that the vast majority of UFO sightings occur in the United States with additional hot spots of sightings in places like Europe and the eastern coast of Australia. We also found that the increase in UFO sightings began around the 1950s followed by a drastic increase in the early 2000s. Another conclusion we came to was that since 2000, a peak in sightings during the months of June and July has developed. From our regression machine learning techniques we conclude that longitude and latitude were not good predictors for sighting duration and could not produce a good regression model. Finally, we learned that classification techniques result in low accuracy for predicting the month of sightings based on longitude and latitude, but they are better than no information. 
 
-##Conclusion
+## Implications and Future Research
 A major limitation of this project was the observational aspect of the data. This means our results are more varied and potentially less accurate than if there was a consistent method of recording sightings that could make this data more accurate. In the future other models could be made for the effect between longitude and latitude that had the ability to deal with the apparent gap between long and short duration sightings. Additionally, future research into the topic could collect more accurate data for how sightings change over the seasons or years by focusing in on a smaller range of the globe. Now that we have identified the US and parts of Europe as hot spots, UFO data collection could be concentrated to these locations for the highest probability of collecting a lot of data. 
