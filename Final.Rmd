@@ -113,7 +113,7 @@ lat_hist
 
 
 ```{r , map }
-#createing scatter plot ontop of world map
+#creating scatter plot on top of world map
 map <- map_data("world")
 
 map_plot <- ggplot()+
@@ -145,7 +145,6 @@ map_plot
 
 ## Bar graph of sightings per year
 ```{r, bar graph of sightings per year}
-
 #creating plot of sightings per year
 sightings_year<- ggplot( data = ufo,
         mapping = aes(x = year))+
@@ -223,9 +222,7 @@ bind_rows(
                       as.character(formula(long_lm))[3],
                       as.character(formula(lat_long_lm))[3])
   ) |> 
-select(explanatories, r.squared, adj.r.squared, sigma)  
-
-
+select(explanatories, r.squared, adj.r.squared, sigma)
 ```
 
 ---

@@ -3,8 +3,8 @@ title: "Analyzing UFO Sightings"
 author: "Shealagh Brown & Sam Zimpfer"
 date: "2025-05-01"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -37,9 +37,12 @@ ufo_raw$datetime <- ymd_hms(ufo_raw$datetime)
 
 #cleaning data
 ufo_raw|>
+  # keep duration in seconds form only
    mutate(seconds = duration..seconds.,
-          year = year(datetime), #create year column
-          month = month.name[month(datetime)])|> #create month column and convert to name  
+          # split datetime data into a year and a month column
+          year = year(datetime),
+          month = month.name[month(datetime)])|>
+  # select relevant columns
   select(datetime, city, state, country, seconds,latitude,longitude, year, month)|>
     filter(seconds <= 40000) |> 
     # filter out badly formatted entries that could cause NA's during the following conversion
@@ -50,6 +53,7 @@ ufo_raw|>
 ufo$latitude <- as.numeric(ufo$latitude) #changing lat to numeric
 ufo$seconds <- as.numeric(ufo$seconds) #changing seconds to numeric
 
+# drop any remaining NA entries
 ufo <- ufo |> drop_na(longitude, latitude, seconds)
 
 ```
@@ -58,7 +62,8 @@ ufo <- ufo |> drop_na(longitude, latitude, seconds)
 
 The first question we had about UFO sightings is how the location around the world influenced the number that occurred. We began by creating histograms for longitude and latitude. From there we created a scatter plot to compare latitude and longitude to see if there was a relationship between the two of them. 
 
-```{r, echo = FALSE}
+```{r echo = FALSE }
+# histogram for longitude
 long_hist <- ggplot(
   data = ufo,
   mapping = aes( x= longitude
@@ -68,13 +73,15 @@ long_hist <- ggplot(
                  color = "black", 
                  bins = 40)+
   labs(
-    title = "Number of sightings per longitude",
+    title = "Number of sightings by longitude",
     x = "Longitude",
     y = "Number of Sightings"
   )+
   scale_x_continuous(breaks = seq(-200, 200, 20))+
   scale_y_continuous(expand = c(0, 0, 0.05, 0))
 
+
+# histogram for latitude
 lat_hist <- ggplot(
   data = ufo,
   mapping = aes( x= latitude
@@ -84,13 +91,16 @@ lat_hist <- ggplot(
                  color = "black",
                  bins = 40)+
   labs(
-    title = "Number of sightings per lattitude",
+    title = "Number of sightings by lattitude",
     x = "Latitude",
     y = "Number of Sightings"
   )+
   scale_x_continuous(breaks = seq(-100, 100, 20))+
   scale_y_continuous(expand = c(0, 0, 0.05, 0))
 
+#display both graphs
+long_hist
+lat_hist
 ```
 
 ```{r, echo = FALSE}
@@ -105,6 +115,7 @@ In the latitude histogram, we see than sightings are most prevalent around 40. A
 
 
 ```{r , echo=FALSE,  map }
+#creating scatter plot on top of world map
 map <- map_data("world")
 
 map_plot <- ggplot()+
@@ -126,6 +137,7 @@ map_plot <- ggplot()+
 scale_y_continuous(expand = c(0, 0, 0.05, 0))+
   ylim(-60,90)
 
+#displaying map plot 
 map_plot
 ```
 Here, we can see in greater detail the geographical dispersion of the sightings. The graph supports the same claims as the previous two graphs that there is a high volume of sightings in the United States. This graph also indicates other potential hot spots of sightings, specifically Europe and the eastern coast of Australia. The color coding makes it evident that most of the sightings are relatively short.\
@@ -178,6 +190,7 @@ We wanted to use machine learning techniques to predict the duration of sighting
 
 
 ```{r , echo=FALSE,  linreg }
+# create several models to explain seconds in terms of latitude and/or longitude
 lat_lm<- lm(
   formula = seconds ~ latitude,
   data = ufo 
@@ -193,6 +206,7 @@ lat_long_lm<- lm(
   data = ufo 
 )
 
+# create table to compare performance of the different models
 bind_rows(
   glance(lat_lm),
   glance(long_lm),
@@ -204,9 +218,7 @@ bind_rows(
                       as.character(formula(long_lm))[3],
                       as.character(formula(lat_long_lm))[3])
   ) |> 
-select(explanatories, r.squared, adj.r.squared, sigma)  
-
-
+select(explanatories, r.squared, adj.r.squared, sigma)
 ```
 
 #### Residual Plots for Duration of Sightings vs Longitude and Lattitude
